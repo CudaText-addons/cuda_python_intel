@@ -3,6 +3,7 @@ title=Python Intel
 desc=Supports code-parsing commands for Python lexer: auto-completion (Ctrl+Space), goto-definition (item in context menu), func-hint (Ctrl+Shift+Space). Based on Jedi library.
 type=cudatext-plugin
 subdir=cuda_python_intel
+homepage=https://github.com/CudaText-addons/cuda_python_intel
 
 [item1]
 section=events
