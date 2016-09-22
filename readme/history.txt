@@ -1,12 +1,12 @@
 
+2016.09.22
++ added command (not in Plugins menu) "Show doc-string"
+
 2016.09.15
 + upd Jedi to 0.10.0, with patch for missed pydoc_data module
 
 1.0.3
 -upd for new api
-
-1.0.2
--fix
 
 1.0.0 (jan 2016)
 init

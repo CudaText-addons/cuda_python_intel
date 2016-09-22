@@ -54,3 +54,11 @@ def handle_func_hint(text, fn, row, col):
         par = [p.get_code().replace('\n', '') for p in s.params]
         res += ['(' + ', '.join(par) + ')']
     return res
+
+
+def handle_docstring(text, fn, row, col):
+    row += 1 #Jedi
+    script = jedi.Script(text, row, col, fn)
+    items = script.goto_definitions()
+    if items:
+        return items[0].docstring()
