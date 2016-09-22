@@ -62,3 +62,16 @@ def handle_docstring(text, fn, row, col):
     items = script.goto_definitions()
     if items:
         return items[0].docstring()
+
+
+def handle_usages(text, fn, row, col):
+    row += 1 #Jedi
+    script = jedi.Script(text, row, col, fn)
+    defs = script.usages()
+    if defs:
+        res = []
+        for d in defs:
+            modfile = d.module_path
+            if modfile and os.path.isfile(modfile):
+                res += [(modfile, d.line-1, d.column)]
+        return res

@@ -1,6 +1,6 @@
 [info]
 title=Python Intel
-desc=Supports code-parsing commands for Python lexer: 1) auto-completion (Ctrl+Space), 2) goto-definition (item in context menu), 3) show function call-tip (Ctrl+Shift+Space). Based on Jedi library.
+desc=Supports intelligence commands for Python: 1) auto-completion (Ctrl+Space), 2) goto-definition (item in context menu), 3) show function call-tip (Ctrl+Shift+Space), 4) show function doc-string, 5) show usages of name. Based on Jedi library.
 type=cudatext-plugin
 subdir=cuda_python_intel
 homepage=https://github.com/CudaText-addons/cuda_python_intel
@@ -10,8 +10,14 @@ section=events
 events=on_complete,on_goto_def,on_func_hint
 lexers=Python
 
-[item2]
+[item10]
 section=commands
 caption=Python Intel: Show doc-string
 method=show_docstring
+menu=0
+
+[item11]
+section=commands
+caption=Python Intel: Show usages
+method=show_usages
 menu=0

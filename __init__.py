@@ -118,3 +118,39 @@ class Command:
             ed.focus()
         else:
             msg_status('Cannot find doc-string')
+
+
+    def show_usages(self):
+        fn = ed.get_filename()
+        carets = ed.get_carets()
+        if len(carets)!=1: return
+        x0, y0, x1, y1 = carets[0]
+
+        if not 0 <= y0 < ed.get_line_count(): 
+            return
+        line = ed.get_text_line(y0)
+        if not 0 <= x0 <= len(line): 
+            return
+            
+        text = ed.get_text_all()
+        if not text: return
+        
+        items = handle_usages(text, fn, y0, x0)
+        if not items:
+            msg_status('Cannot find usages')
+            return
+            
+        items_show = [
+            os.path.basename(item[0])+
+            ', Line %s, Col %d' %(item[1]+1, item[2]+1)+
+            '\t'+item[0]
+            for item in items
+            ]
+        res = dlg_menu(MENU_LIST_ALT, '\n'.join(items_show))
+        if res is None: return
+        
+        item = items[res]
+        file_open(item[0])
+        ed.set_caret(item[2], item[1])
+        ed.cmd(cmds.cCommand_ScrollToCaretTop)
+        msg_status('Goto: '+item[0])

@@ -5,6 +5,7 @@ Gives intelligence commands for Python lexer:
 2) go to definition (item in editor context menu) - place caret on name of func/class/variable
 3) show function call-tip (Ctrl+Shift+Space) - place caret after function name between () brackets
 4) show function doc-string - shows doc-string for function/class under caret, in the Output panel
+5) show usages - menu shows files/line-nums where name is used
 
 
 Based on Jedi:
