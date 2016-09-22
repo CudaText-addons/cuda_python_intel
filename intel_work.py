@@ -52,7 +52,7 @@ def handle_func_hint(text, fn, row, col):
     res = []
     for s in sign:
         par = [p.get_code().replace('\n', '') for p in s.params]
-        res += ['(' + ', '.join(par) + ')']
+        res += [' '+s.name+'(' + ', '.join(par) + ')']
     return res
 
 
