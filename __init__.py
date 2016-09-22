@@ -46,21 +46,10 @@ class Command:
         
         
     def on_goto_def(self, ed_self):
-        fn = ed.get_filename()
-        carets = ed.get_carets()
-        if len(carets)!=1: return True
-        x0, y0, x1, y1 = carets[0]
-
-        if not 0 <= y0 < ed.get_line_count(): 
-            return
-        line = ed.get_text_line(y0)
-        if not 0 <= x0 <= len(line): 
-            return
-            
-        text = ed.get_text_all()
-        if not text: return True
+        params = self.get_params()
+        if not params: return
         
-        res = handle_goto_def(text, fn, y0, x0)
+        res = handle_goto_def(*params)
         if res is None: return True
         
         fn, y, x = res
@@ -68,46 +57,24 @@ class Command:
         ed.set_prop(PROP_LINE_TOP, str(y-offset_lines)) #must be
         ed.set_caret(x, y)
 
-        print('Goto "%s", line %d' % (fn, y+1))
+        print('Goto: "%s", Line %d' % (fn, y+1))
         return True
 
 
     def on_func_hint(self, ed_self):
-        fn = ed.get_filename()
-        carets = ed.get_carets()
-        if len(carets)!=1: return
-        x0, y0, x1, y1 = carets[0]
-
-        if not 0 <= y0 < ed.get_line_count(): 
-            return
-        line = ed.get_text_line(y0)
-        if not 0 <= x0 <= len(line): 
-            return
-            
-        text = ed.get_text_all()
-        if not text: return
+        params = self.get_params()
+        if not params: return
         
-        res = handle_func_hint(text, fn, y0, x0)
+        res = handle_func_hint(*params)
         if res:
-            return ' *** '.join(res)
+            return ' ---- '.join(res)
             
 
     def show_docstring(self):
-        fn = ed.get_filename()
-        carets = ed.get_carets()
-        if len(carets)!=1: return
-        x0, y0, x1, y1 = carets[0]
-
-        if not 0 <= y0 < ed.get_line_count(): 
-            return
-        line = ed.get_text_line(y0)
-        if not 0 <= x0 <= len(line): 
-            return
-            
-        text = ed.get_text_all()
-        if not text: return
+        params = self.get_params()
+        if not params: return
         
-        text = handle_docstring(text, fn, y0, x0)
+        text = handle_docstring(*params)
         if text:
             app_log(LOG_SET_PANEL, LOG_PANEL_OUTPUT)
             app_log(LOG_CLEAR, '')
@@ -121,21 +88,10 @@ class Command:
 
 
     def show_usages(self):
-        fn = ed.get_filename()
-        carets = ed.get_carets()
-        if len(carets)!=1: return
-        x0, y0, x1, y1 = carets[0]
-
-        if not 0 <= y0 < ed.get_line_count(): 
-            return
-        line = ed.get_text_line(y0)
-        if not 0 <= x0 <= len(line): 
-            return
-            
-        text = ed.get_text_all()
-        if not text: return
+        params = self.get_params()
+        if not params: return
         
-        items = handle_usages(text, fn, y0, x0)
+        items = handle_usages(*params)
         if not items:
             msg_status('Cannot find usages')
             return
@@ -154,3 +110,21 @@ class Command:
         ed.set_caret(item[2], item[1])
         ed.cmd(cmds.cCommand_ScrollToCaretTop)
         msg_status('Goto: '+item[0])
+
+
+    def get_params(self):
+        fn = ed.get_filename()
+        carets = ed.get_carets()
+        if len(carets)!=1: return
+        x0, y0, x1, y1 = carets[0]
+
+        if not 0 <= y0 < ed.get_line_count(): 
+            return
+        line = ed.get_text_line(y0)
+        if not 0 <= x0 <= len(line): 
+            return
+            
+        text = ed.get_text_all()
+        if not text: return
+        
+        return (text, fn, y0, x0)
