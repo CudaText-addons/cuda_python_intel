@@ -3,7 +3,7 @@ from cudatext import *
 import cudatext_cmd as cmds
 from .intel_work import *
 
-offset_lines=5
+LINE_GOTO_OFFSET = 5
 
 def is_wordchar(s):
     return (s=='_') or s.isalnum()
@@ -47,17 +47,13 @@ class Command:
         
     def on_goto_def(self, ed_self):
         params = self.get_params()
-        if not params: return
+        if not params: return True
         
         res = handle_goto_def(*params)
         if res is None: return True
-        
-        fn, y, x = res
-        file_open(fn)
-        ed.set_prop(PROP_LINE_TOP, str(y-offset_lines)) #must be
-        ed.set_caret(x, y)
 
-        print('Goto: "%s", Line %d' % (fn, y+1))
+        #res has (filename, y, x)        
+        self.goto_file(*res)
         return True
 
 
@@ -65,9 +61,9 @@ class Command:
         params = self.get_params()
         if not params: return
         
-        res = handle_func_hint(*params)
-        if res:
-            return ' ---- '.join(res)
+        items = handle_func_hint(*params)
+        if items:
+            return ' // '.join(items)
             
 
     def show_docstring(self):
@@ -106,10 +102,18 @@ class Command:
         if res is None: return
         
         item = items[res]
-        file_open(item[0])
-        ed.set_caret(item[2], item[1])
-        ed.cmd(cmds.cCommand_ScrollToCaretTop)
-        msg_status('Goto: '+item[0])
+        self.goto_file(item[0], item[1], item[2]) 
+        
+        
+    def goto_file(self, filename, num_line, num_col):
+        if not os.path.isfile(filename): return
+        
+        file_open(filename)
+        ed.set_prop(PROP_LINE_TOP, str(max(0, num_line-LINE_GOTO_OFFSET)))
+        ed.set_caret(num_col, num_line)
+        
+        msg_status('Go to file: '+filename)
+        print('Goto "%s", Line %d'%(filename, num_line+1))
 
 
     def get_params(self):

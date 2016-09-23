@@ -1,4 +1,7 @@
 
+2016.09.23
++ refactor: jump to file
+
 2016.09.22
 + cmd "Show doc-string" (not in Plugins menu)
 + cmd "Show usages" (not in Plugins menu)
