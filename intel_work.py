@@ -23,19 +23,19 @@ def handle_autocomplete(text, fn, row, col):
 def handle_goto_def(text, fn, row, col):
     row += 1 #Jedi has 1-based
     script = jedi.Script(text, row, col, fn)
-    defs = script.goto_assignments()
-    if not defs: return
+    items = script.goto_assignments()
+    if not items: return
 
-    d = defs[0]
+    d = items[0]
     modfile = d.module_path
     if modfile is None: return
     
     if not os.path.isfile(modfile):
         # second way to get symbol definitions
-        defs = script.goto_definitions()
-        if not defs: return
+        items = script.goto_definitions()
+        if not items: return
 
-        d = defs[0]
+        d = items[0]
         modfile = d.module_path # module_path is all i need?
         if modfile is None: return
         if not os.path.isfile(modfile): return
@@ -46,14 +46,9 @@ def handle_goto_def(text, fn, row, col):
 def handle_func_hint(text, fn, row, col):
     row += 1 #Jedi
     script = jedi.Script(text, row, col, fn)
-    sign = script.call_signatures()
-    if not sign: return
-    
-    res = []
-    for s in sign:
-        par = [p.get_code().replace('\n', '') for p in s.params]
-        res += [' '+s.name+'(' + ', '.join(par) + ')']
-    return res
+    items = script.call_signatures()
+    if items:
+        return items[0].call_signature(4000)
 
 
 def handle_docstring(text, fn, row, col):
@@ -67,10 +62,10 @@ def handle_docstring(text, fn, row, col):
 def handle_usages(text, fn, row, col):
     row += 1 #Jedi
     script = jedi.Script(text, row, col, fn)
-    defs = script.usages()
-    if defs:
+    items = script.usages()
+    if items:
         res = []
-        for d in defs:
+        for d in items:
             modfile = d.module_path
             if modfile and os.path.isfile(modfile):
                 res += [(modfile, d.line-1, d.column)]

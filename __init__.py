@@ -61,9 +61,11 @@ class Command:
         params = self.get_params()
         if not params: return
         
-        items = handle_func_hint(*params)
-        if items:
-            return ' // '.join(items)
+        item = handle_func_hint(*params)
+        if item is None:
+            return
+        else:
+            return ' '+item
             
 
     def show_docstring(self):
