@@ -1,4 +1,7 @@
 
+2016.10.08
++ refactor
+
 2016.09.23
 + improve "Show func hint"
 + refactor: jump to file
@@ -11,7 +14,7 @@
 + upd Jedi to 0.10.0, with patch for missed pydoc_data module
 
 1.0.3
--upd for new api
+- upd for new api
 
 1.0.0 (jan 2016)
 init
