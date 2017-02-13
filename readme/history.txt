@@ -1,4 +1,7 @@
 
+2017.02.14
+- fix: autocomplete didnt show after "ed."
+
 2016.10.08
 + refactor
 
