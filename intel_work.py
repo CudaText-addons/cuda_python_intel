@@ -9,14 +9,13 @@ def handle_autocomplete(text, fn, row, col):
     script = jedi.Script(text, row, col, fn)
     completions = script.completions()
     if not completions: return
-        
+
     text = ''
     for c in completions:
-        desc = c.description.split(':')[0]
-        pars = '( )' if desc == 'function' else ''
+        pars = '()' if c.type=='function' else ''
         if hasattr(c, 'params'):
-            pars = '('+', '.join([p.name for p in c.params])+')'
-        text += desc + '|' + c.name + '|' + pars + '\n'
+            pars = '(' + ', '.join([p.name for p in c.params]) + ')'
+        text += c.type + '|' + c.name + '|' + pars + '\n'
     return text
 
 
@@ -29,7 +28,7 @@ def handle_goto_def(text, fn, row, col):
     d = items[0]
     modfile = d.module_path
     if modfile is None: return
-    
+
     if not os.path.isfile(modfile):
         # second way to get symbol definitions
         items = script.goto_definitions()
@@ -48,7 +47,9 @@ def handle_func_hint(text, fn, row, col):
     script = jedi.Script(text, row, col, fn)
     items = script.call_signatures()
     if items:
-        return items[0].call_signature(4000)
+        par = items[0].params
+        desc = ', '.join([n.name for n in par])
+        return desc
 
 
 def handle_docstring(text, fn, row, col):
