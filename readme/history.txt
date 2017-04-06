@@ -1,4 +1,7 @@
 
+2017.04.06
++ updated Jedi
+
 2017.03.17
 + updated Jedi lib to 0.10; code adapted
 
