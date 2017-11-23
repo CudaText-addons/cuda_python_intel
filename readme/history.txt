@@ -1,9 +1,12 @@
 
+2017.11.23
++ updated Jedi to 0.11.1
+
 2017.04.06
-+ updated Jedi
++ updated Jedi to 0.10.2
 
 2017.03.17
-+ updated Jedi lib to 0.10; code adapted
++ updated Jedi to 0.10; code adapted
 
 2017.02.14
 - fix: autocomplete didnt show after "ed."
