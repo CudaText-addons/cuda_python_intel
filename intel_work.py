@@ -12,8 +12,8 @@ def handle_autocomplete(text, fn, row, col):
 
     text = ''
     for c in completions:
-        pars = '()' if c.type=='function' else ''
-        if hasattr(c, 'params'):
+        pars = ''
+        if c.type=='function':
             pars = '(' + ', '.join([p.name for p in c.params]) + ')'
         text += c.type + '|' + c.name + '|' + pars + '\n'
     return text

@@ -1,4 +1,7 @@
 
+2017.11.25
+- fix: crash on some completions, on Win10
+
 2017.11.23
 + updated Jedi to 0.11.1
 
