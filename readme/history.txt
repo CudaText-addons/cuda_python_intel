@@ -1,4 +1,7 @@
 
+2017.12.03
+- fix: fixed parso/utils.py, so Jedi don't crash (but some completion don't work)
+
 2017.11.25
 - fix: crash on some completions, on Win10
 
