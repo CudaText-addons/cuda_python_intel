@@ -48,7 +48,7 @@ def split_lines(string, keepends=False):
         return re.split('\n|\r\n', string)
 
 
-def python_bytes_to_unicode(source, encoding='utf-8', errors='strict'):
+def python_bytes_to_unicode(source, encoding='utf-8', errors='replace'):
     """
     Checks for unicode BOMs and PEP 263 encoding declarations. Then returns a
     unicode object like in :py:meth:`bytes.decode`.
