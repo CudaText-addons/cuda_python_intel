@@ -100,7 +100,7 @@ def eval_node(context, element):
         # Must be an ellipsis, other operators are not evaluated.
         # In Python 2 ellipsis is coded as three single dot tokens, not
         # as one token 3 dot token.
-        assert element.value in ('.', '...')
+        assert element.value in ('.', '...'), 'value is actually ' + element.value
         return ContextSet(compiled.create(evaluator, Ellipsis))
     elif typ == 'dotted_name':
         context_set = eval_atom(context, element.children[0])
@@ -119,7 +119,7 @@ def eval_node(context, element):
 def eval_trailer(context, base_contexts, trailer):
     trailer_op, node = trailer.children[:2]
     if node == ')':  # `arglist` is optional.
-        node = ()
+        node = None
 
     if trailer_op == '[':
         trailer_op, node, _ = trailer.children
@@ -148,7 +148,7 @@ def eval_trailer(context, base_contexts, trailer):
                 name_or_str=node
             )
         else:
-            assert trailer_op == '('
+            assert trailer_op == '(', 'trailer_op is actually %s' % trailer_op
             args = arguments.TreeArguments(context.evaluator, context, node, trailer)
             return base_contexts.execute(args)
 
@@ -286,10 +286,10 @@ def eval_or_test(context, or_test):
         # handle lazy evaluation of and/or here.
         if operator in ('and', 'or'):
             left_bools = set(left.py__bool__() for left in types)
-            if left_bools == set([True]):
+            if left_bools == {True}:
                 if operator == 'and':
                     types = context.eval_node(right)
-            elif left_bools == set([False]):
+            elif left_bools == {False}:
                 if operator != 'and':
                     types = context.eval_node(right)
             # Otherwise continue, because of uncertainty.

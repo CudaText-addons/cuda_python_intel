@@ -266,7 +266,7 @@ class Importer(object):
             # Since we know nothing about the call location of the sys.path,
             # it's a possibility that the current directory is the origin of
             # the Python execution.
-            sys_path_mod.insert(0, os.path.dirname(self.file_path))
+            sys_path_mod.append(os.path.dirname(self.file_path))
 
         return in_path + sys_path_mod
 
@@ -369,8 +369,9 @@ class Importer(object):
             else:
                 module_path = get_init_path(module_path)
         elif module_file:
-            code = module_file.read()
             module_file.close()
+            with open(module_path, 'rb') as f:
+                code = f.read()
 
         if isinstance(module_path, ImplicitNSInfo):
             from jedi.evaluate.context.namespace import ImplicitNamespaceContext
@@ -484,7 +485,7 @@ def _load_module(evaluator, path=None, code=None, sys_path=None, parent_module=N
     if path is not None and path.endswith(('.py', '.zip', '.egg')) \
             and dotted_path not in settings.auto_import_modules:
 
-        module_node = evaluator.grammar.parse(
+        module_node = evaluator.parse(
             code=code, path=path, cache=True, diff_cache=True,
             cache_path=settings.cache_directory)
 
