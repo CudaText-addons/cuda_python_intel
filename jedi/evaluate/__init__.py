@@ -360,10 +360,10 @@ class Evaluator(object):
             scope_node = parent_scope(node)
         return from_scope_node(scope_node, is_nested=True, node_is_object=node_is_object)
 
-    def parse_and_get_code(self, code, path, **kwargs):
+    def parse_and_get_code(self, code=None, path=None, **kwargs):
         if self.allow_different_encoding:
             if code is None:
-                with open('rb') as f:
+                with open(path, 'rb') as f:
                     code = f.read()
             code = python_bytes_to_unicode(code, errors='replace')
 
