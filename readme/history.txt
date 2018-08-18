@@ -1,4 +1,7 @@
 
+2018.08.18
++ updated Jedi to 0.12.1
+
 2018.01.20
 + updated Jedi to 0.12.0
 
