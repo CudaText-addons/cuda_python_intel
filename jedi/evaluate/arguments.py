@@ -101,7 +101,9 @@ class TreeArguments(AbstractArguments):
         if self.argument_node is None:
             return
 
-        if not (self.argument_node.type == 'arglist' or (
+        # Allow testlist here as well for Python2's class inheritance
+        # definitions.
+        if not (self.argument_node.type in ('arglist', 'testlist') or (
                 # in python 3.5 **arg is an argument, not arglist
                 (self.argument_node.type == 'argument') and
                  self.argument_node.children[0] in ('*', '**'))):
@@ -128,7 +130,6 @@ class TreeArguments(AbstractArguments):
                 arrays = self.context.eval_node(el)
                 iterators = [_iterate_star_args(self.context, a, el, funcdef)
                              for a in arrays]
-                iterators = list(iterators)
                 for values in list(zip_longest(*iterators)):
                     # TODO zip_longest yields None, that means this would raise
                     # an exception?
@@ -136,7 +137,7 @@ class TreeArguments(AbstractArguments):
                         [v for v in values if v is not None]
                     )
             elif star_count == 2:
-                arrays = self._evaluator.eval_element(self.context, el)
+                arrays = self.context.eval_node(el)
                 for dct in arrays:
                     for key, values in _star_star_dict(self.context, dct, el, funcdef):
                         yield key, values
@@ -241,7 +242,7 @@ def _star_star_dict(context, array, input_node, funcdef):
         # For now ignore this case. In the future add proper iterators and just
         # make one call without crazy isinstance checks.
         return {}
-    elif isinstance(array, iterable.AbstractIterable) and array.array_type == 'dict':
+    elif isinstance(array, iterable.Sequence) and array.array_type == 'dict':
         return array.exact_key_items()
     else:
         if funcdef is not None:

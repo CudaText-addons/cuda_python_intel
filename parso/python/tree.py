@@ -60,7 +60,6 @@ _GET_DEFINITION_TYPES = set([
 _IMPORTS = set(['import_name', 'import_from'])
 
 
-
 class DocstringMixin(object):
     __slots__ = ()
 
@@ -125,13 +124,12 @@ class PythonLeaf(PythonMixin, Leaf):
         #   indent error leafs somehow? No idea how, though.
         previous_leaf = self.get_previous_leaf()
         if previous_leaf is not None and previous_leaf.type == 'error_leaf' \
-                and previous_leaf.original_type in ('indent', 'error_dedent'):
+                and previous_leaf.token_type in ('INDENT', 'ERROR_DEDENT'):
             previous_leaf = previous_leaf.get_previous_leaf()
 
         if previous_leaf is None:
             return self.line - self.prefix.count('\n'), 0  # It's the first leaf.
         return previous_leaf.end_pos
-
 
 
 class _LeafWithoutNewlines(PythonLeaf):
@@ -165,6 +163,10 @@ class PythonErrorLeaf(ErrorLeaf, PythonLeaf):
 class EndMarker(_LeafWithoutNewlines):
     __slots__ = ()
     type = 'endmarker'
+
+    @utf8_repr
+    def __repr__(self):
+        return "<%s: prefix=%s>" % (type(self).__name__, repr(self.prefix))
 
 
 class Newline(PythonLeaf):
@@ -235,7 +237,6 @@ class Name(_LeafWithoutNewlines):
         return None
 
 
-
 class Literal(PythonLeaf):
     __slots__ = ()
 
@@ -260,6 +261,33 @@ class String(Literal):
             flags=re.DOTALL
         )
         return match.group(2)[:-len(match.group(1))]
+
+
+class FStringString(Leaf):
+    """
+    f-strings contain f-string expressions and normal python strings. These are
+    the string parts of f-strings.
+    """
+    type = 'fstring_string'
+    __slots__ = ()
+
+
+class FStringStart(Leaf):
+    """
+    f-strings contain f-string expressions and normal python strings. These are
+    the string parts of f-strings.
+    """
+    type = 'fstring_start'
+    __slots__ = ()
+
+
+class FStringEnd(Leaf):
+    """
+    f-strings contain f-string expressions and normal python strings. These are
+    the string parts of f-strings.
+    """
+    type = 'fstring_end'
+    __slots__ = ()
 
 
 class _StringComparisonMixin(object):
@@ -625,6 +653,7 @@ class Function(ClassOrFunc):
             return None
         except IndexError:
             return None
+
 
 class Lambda(Function):
     """

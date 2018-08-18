@@ -95,6 +95,7 @@ def setup_readline(namespace_module=__main__):
                     )
                     before = text[:len(text) - len(name)]
                     completions = interpreter.completions()
+                    logging.debug("REPL completions: %s", completions)
                 except:
                     logging.error("REPL Completion error:\n" + traceback.format_exc())
                     raise
@@ -108,6 +109,11 @@ def setup_readline(namespace_module=__main__):
                 return None
 
     try:
+        # Need to import this one as well to make sure it's executed before
+        # this code. This didn't use to be an issue until 3.3. Starting with
+        # 3.4 this is different, it always overwrites the completer if it's not
+        # already imported here.
+        import rlcompleter
         import readline
     except ImportError:
         print("Jedi: Module readline not available.")
