@@ -1,14 +1,33 @@
 import sys
 import os
+import cudatext as app
+from cudatext import ed
 sys.path.append(os.path.dirname(__file__))
 import jedi
 
 
-def handle_autocomplete(text, fn, row, col):
+def create_env(env_path):
+    try:
+        env = jedi.create_environment(env_path, True)
+        print(repr(env).replace('Environment:', 'Python'))
+        return env
+    except jedi.InvalidPythonEnvironment:
+        return
+
+
+def env_sys_path(env):
+    if env:
+        sys_path = env.get_sys_path()
+        sys_path.extend(sys.path)
+        return sys_path
+
+
+def handle_autocomplete(text, fn, row, col, sys_path, env):
     row += 1 #Jedi has 1-based
-    script = jedi.Script(text, row, col, fn)
+    script = jedi.Script(text, row, col, fn, sys_path=sys_path, environment=env)
     completions = script.completions()
-    if not completions: return
+    if not completions:
+        return
 
     text = ''
     for c in completions:
@@ -19,15 +38,16 @@ def handle_autocomplete(text, fn, row, col):
     return text
 
 
-def handle_goto_def(text, fn, row, col):
-    row += 1 #Jedi has 1-based
-    script = jedi.Script(text, row, col, fn)
+def handle_goto_def(text, fn, row, col, sys_path, env):
+    row += 1  # Jedi has 1-based
+    script = jedi.Script(text, row, col, fn, sys_path=sys_path, environment=env)
     items = script.goto_assignments()
     if not items: return
 
     d = items[0]
     modfile = d.module_path
-    if modfile is None: return
+    if modfile is None:
+        return
 
     if not os.path.isfile(modfile):
         # second way to get symbol definitions
@@ -42,9 +62,9 @@ def handle_goto_def(text, fn, row, col):
     return (modfile, d.line-1, d.column)
 
 
-def handle_func_hint(text, fn, row, col):
-    row += 1 #Jedi
-    script = jedi.Script(text, row, col, fn)
+def handle_func_hint(text, fn, row, col, sys_path, env):
+    row += 1  # Jedi
+    script = jedi.Script(text, row, col, fn, sys_path=sys_path, environment=env)
     items = script.call_signatures()
     if items:
         par = items[0].params
@@ -52,17 +72,17 @@ def handle_func_hint(text, fn, row, col):
         return desc
 
 
-def handle_docstring(text, fn, row, col):
-    row += 1 #Jedi
-    script = jedi.Script(text, row, col, fn)
+def handle_docstring(text, fn, row, col, sys_path, env):
+    row += 1  # Jedi
+    script = jedi.Script(text, row, col, fn, sys_path=sys_path, environment=env)
     items = script.goto_definitions()
     if items:
         return items[0].docstring()
 
 
-def handle_usages(text, fn, row, col):
-    row += 1 #Jedi
-    script = jedi.Script(text, row, col, fn)
+def handle_usages(text, fn, row, col, sys_path, env):
+    row += 1  # Jedi
+    script = jedi.Script(text, row, col, fn, sys_path=sys_path, environment=env)
     items = script.usages()
     if items:
         res = []

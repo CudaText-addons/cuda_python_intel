@@ -1,9 +1,24 @@
 import os
+import sys
 from cudatext import *
 import cudatext_cmd as cmds
 from .intel_work import *
 
 LINE_GOTO_OFFSET = 5
+INI = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_python_intel.ini')
+PY = 'Python'
+ENV = 'Environment'
+
+
+env = None
+sys_path = None
+env_path = ini_read(INI, PY, ENV, '')
+if env_path:
+    env = create_env(env_path)
+    sys_path = env_sys_path(env)
+if os.name == 'nt' and not env:
+    print("   ! Python interpreter not selected.\n   ! You can't use Python Intel")
+
 
 def is_wordchar(s):
     return (s=='_') or s.isalnum()
@@ -14,7 +29,7 @@ class Command:
         params = self.get_params()
         if not params: return
 
-        text, fn, y0, x0 = params
+        text, fn, y0, x0, *args = params
         line = ed.get_text_line(y0)
         if not 0 < x0 <= len(line):
             return True
@@ -36,6 +51,9 @@ class Command:
         if len1<=0 and not after_dot:
             return True
 
+        if os.name == 'nt' and not env:
+            return True
+
         text = handle_autocomplete(*params)
         if not text: return True
 
@@ -46,6 +64,9 @@ class Command:
     def on_goto_def(self, ed_self):
         params = self.get_params()
         if not params: return True
+
+        if os.name == 'nt' and not env:
+            return True
 
         res = handle_goto_def(*params)
         if res is None: return True
@@ -59,6 +80,9 @@ class Command:
         params = self.get_params()
         if not params: return
 
+        if os.name == 'nt' and not env:
+            return
+
         item = handle_func_hint(*params)
         if item is None:
             return
@@ -70,12 +94,14 @@ class Command:
         params = self.get_params()
         if not params: return
 
+        if os.name == 'nt' and not env:
+            return
+
         text = handle_docstring(*params)
         if text:
-            app_log(LOG_SET_PANEL, LOG_PANEL_OUTPUT)
-            app_log(LOG_CLEAR, '')
+            app_log(LOG_CLEAR, '', panel=LOG_PANEL_OUTPUT)
             for s in text.splitlines():
-                app_log(LOG_ADD, s)
+                app_log(LOG_ADD, s, panel=LOG_PANEL_OUTPUT)
             #
             ed.cmd(cmds.cmd_ShowPanelOutput)
             ed.focus()
@@ -86,6 +112,9 @@ class Command:
     def show_usages(self):
         params = self.get_params()
         if not params: return
+
+        if os.name == 'nt' and not env:
+            return
 
         items = handle_usages(*params)
         if not items:
@@ -131,4 +160,15 @@ class Command:
         text = ed.get_text_all()
         if not text: return
 
-        return (text, fn, y0, x0)
+        return (text, fn, y0, x0, sys_path, env)
+
+    def select_py_interpreter(self):
+        global env
+        global sys_path
+        env_path = dlg_file(True, '!', '', '')
+        env_ = create_env(env_path)
+        if env_:
+            ini_write(INI, PY, ENV, env_path)
+            env = env_
+            sys_path = env_sys_path(env_)
+            return env_
