@@ -5,10 +5,9 @@ import cudatext_cmd as cmds
 from .intel_work import *
 
 LINE_GOTO_OFFSET = 5
-INI = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_python_intel.ini')
+INI = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_python_intel.ini')
 PY = 'Python'
 ENV = 'Environment'
-
 
 env = None
 sys_path = None
@@ -60,7 +59,6 @@ class Command:
         ed.complete(text, len1, len2)
         return True
 
-
     def on_goto_def(self, ed_self):
         params = self.get_params()
         if not params: return True
@@ -75,7 +73,6 @@ class Command:
         self.goto_file(*res)
         return True
 
-
     def on_func_hint(self, ed_self):
         params = self.get_params()
         if not params: return
@@ -89,7 +86,6 @@ class Command:
         else:
             return ' '+item
 
-
     def show_docstring(self):
         params = self.get_params()
         if not params: return
@@ -102,16 +98,16 @@ class Command:
             app_log(LOG_CLEAR, '', panel=LOG_PANEL_OUTPUT)
             for s in text.splitlines():
                 app_log(LOG_ADD, s, panel=LOG_PANEL_OUTPUT)
-            #
+
             ed.cmd(cmds.cmd_ShowPanelOutput)
             ed.focus()
         else:
             msg_status('Cannot find doc-string')
 
-
     def show_usages(self):
         params = self.get_params()
-        if not params: return
+        if not params:
+            return
 
         if os.name == 'nt' and not env:
             return
@@ -122,17 +118,17 @@ class Command:
             return
 
         items_show = [
-            os.path.basename(item[0])+
-            ', Line %s, Col %d' %(item[1]+1, item[2]+1)+
-            '\t'+item[0]
+            os.path.basename(item[0]) +
+            ', Line %s, Col %d' % (item[1] + 1, item[2] + 1) +
+            '\t' + item[0]
             for item in items
             ]
         res = dlg_menu(MENU_LIST_ALT, '\n'.join(items_show))
-        if res is None: return
+        if res is None:
+            return
 
         item = items[res]
         self.goto_file(item[0], item[1], item[2])
-
 
     def goto_file(self, filename, num_line, num_col):
         if not os.path.isfile(filename): return
@@ -148,7 +144,8 @@ class Command:
     def get_params(self):
         fn = ed.get_filename()
         carets = ed.get_carets()
-        if len(carets)!=1: return
+        if len(carets)!=1:
+            return
         x0, y0, x1, y1 = carets[0]
 
         if not 0 <= y0 < ed.get_line_count():
@@ -158,17 +155,23 @@ class Command:
             return
 
         text = ed.get_text_all()
-        if not text: return
+        if not text:
+            return
 
         return (text, fn, y0, x0, sys_path, env)
 
     def select_py_interpreter(self):
         global env
         global sys_path
-        env_path = dlg_file(True, '!', '', '')
-        env_ = create_env(env_path)
+        selected_env_path = dlg_file(True, '!', '', '')
+        env_ = create_env(selected_env_path)
         if env_:
-            ini_write(INI, PY, ENV, env_path)
+            ini_write(INI, PY, ENV, selected_env_path)
             env = env_
             sys_path = env_sys_path(env_)
             return env_
+        else:
+            if env_path:
+                print('Current Python interpreter: {}'.format(env_path))
+            else:
+                print('Current Python interpreter: {}'.format(sys.executable))
