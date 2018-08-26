@@ -1,4 +1,4 @@
-2018.08.23
+2018.08.26
 + now you can select diferent Python interpeter
 - fix: crash on Windows
 - fix: avoid deprecated API

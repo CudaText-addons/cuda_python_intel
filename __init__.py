@@ -50,9 +50,6 @@ class Command:
         if len1<=0 and not after_dot:
             return True
 
-        if os.name == 'nt' and not env:
-            return True
-
         text = handle_autocomplete(*params)
         if not text: return True
 
@@ -62,9 +59,6 @@ class Command:
     def on_goto_def(self, ed_self):
         params = self.get_params()
         if not params: return True
-
-        if os.name == 'nt' and not env:
-            return True
 
         res = handle_goto_def(*params)
         if res is None: return True
@@ -77,9 +71,6 @@ class Command:
         params = self.get_params()
         if not params: return
 
-        if os.name == 'nt' and not env:
-            return
-
         item = handle_func_hint(*params)
         if item is None:
             return
@@ -89,9 +80,6 @@ class Command:
     def show_docstring(self):
         params = self.get_params()
         if not params: return
-
-        if os.name == 'nt' and not env:
-            return
 
         text = handle_docstring(*params)
         if text:
@@ -107,9 +95,6 @@ class Command:
     def show_usages(self):
         params = self.get_params()
         if not params:
-            return
-
-        if os.name == 'nt' and not env:
             return
 
         items = handle_usages(*params)
@@ -131,7 +116,8 @@ class Command:
         self.goto_file(item[0], item[1], item[2])
 
     def goto_file(self, filename, num_line, num_col):
-        if not os.path.isfile(filename): return
+        if not os.path.isfile(filename):
+            return
 
         file_open(filename)
         ed.set_prop(PROP_LINE_TOP, str(max(0, num_line-LINE_GOTO_OFFSET)))
@@ -142,6 +128,8 @@ class Command:
 
 
     def get_params(self):
+        if os.name == 'nt' and not env:
+            return
         fn = ed.get_filename()
         carets = ed.get_carets()
         if len(carets)!=1:
