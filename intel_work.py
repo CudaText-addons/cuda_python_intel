@@ -6,13 +6,13 @@ import jedi
 
 def create_env(env_path):
     if env_path:
-    try:
-        env = jedi.create_environment(env_path, True)
-        print(repr(env).replace('Environment:', 'Python'))
-        return env
-    except jedi.InvalidPythonEnvironment:
+        try:
+            env = jedi.create_environment(env_path, True)
+            print(repr(env).replace('Environment:', 'Python'))
+            return env
+        except jedi.InvalidPythonEnvironment:
             print('Error! Python interpreter not activate')
-        return
+            return
 
 
 def env_sys_path(env):
@@ -57,7 +57,7 @@ def handle_goto_def(text, fn, row, col, sys_path, env):
             return
 
         d = items[0]
-        modfile = d.module_path # module_path is all i need?
+        modfile = d.module_path  # module_path is all i need?
         if modfile is None:
             return
         if not os.path.isfile(modfile):
