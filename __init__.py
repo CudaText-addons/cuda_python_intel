@@ -8,7 +8,7 @@ LINE_GOTO_OFFSET = 5
 INI = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_python_intel.ini')
 PY = 'python'
 ENV = 'environment'
-IS_NT = True if os.name == 'nt' else False
+IS_NT = os.name == 'nt'
 
 
 def is_wordchar(s):
