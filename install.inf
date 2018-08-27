@@ -4,25 +4,25 @@ desc=Supports intelligence commands for Python: 1) auto-completion (Ctrl+Space),
 type=cudatext-plugin
 subdir=cuda_python_intel
 homepage=https://github.com/CudaText-addons/cuda_python_intel
+api=1.0.252
 
 [item1]
 section=events
 events=on_complete,on_goto_def,on_func_hint
 lexers=Python
 
-[item3]
+[item10]
+section=commands
+caption=Python Intel\Show doc-string
+method=show_docstring
+
+[item11]
+section=commands
+caption=Python Intel\Show usages
+method=show_usages
+
+[item20]
 section=commands
 caption=Python Intel\Select Python interpreter
 method=select_py_interpreter
 
-[item10]
-section=commands
-caption=Python Intel: Show doc-string
-method=show_docstring
-menu=0
-
-[item11]
-section=commands
-caption=Python Intel: Show usages
-method=show_usages
-menu=0
