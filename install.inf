@@ -10,6 +10,11 @@ section=events
 events=on_complete,on_goto_def,on_func_hint
 lexers=Python
 
+[item3]
+section=commands
+caption=Python Intel\Select Python interpreter
+method=select_py_interpreter
+
 [item10]
 section=commands
 caption=Python Intel: Show doc-string

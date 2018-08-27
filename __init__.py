@@ -1,20 +1,37 @@
 import os
+import sys
 from cudatext import *
 import cudatext_cmd as cmds
 from .intel_work import *
 
 LINE_GOTO_OFFSET = 5
+INI = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_python_intel.ini')
+PY = 'python'
+ENV = 'environment'
+IS_NT = os.name == 'nt'
+
 
 def is_wordchar(s):
     return (s=='_') or s.isalnum()
 
 
 class Command:
+
+    def __init__(self):
+        self.env = None
+        self.sys_path = None
+        self.env_path = ini_read(INI, PY, ENV, '')
+        if self.env_path:
+            self.env = create_env(self.env_path)
+            self.sys_path = env_sys_path(self.env)
+        if IS_NT and not self.env:
+            print("   ! Python interpreter not selected.\n   ! You can't use Python Intel")
+
     def on_complete(self, ed_self):
         params = self.get_params()
         if not params: return
 
-        text, fn, y0, x0 = params
+        text, fn, y0, x0, *args = params
         line = ed.get_text_line(y0)
         if not 0 < x0 <= len(line):
             return True
@@ -42,7 +59,6 @@ class Command:
         ed.complete(text, len1, len2)
         return True
 
-
     def on_goto_def(self, ed_self):
         params = self.get_params()
         if not params: return True
@@ -54,7 +70,6 @@ class Command:
         self.goto_file(*res)
         return True
 
-
     def on_func_hint(self, ed_self):
         params = self.get_params()
         if not params: return
@@ -65,27 +80,25 @@ class Command:
         else:
             return ' '+item
 
-
     def show_docstring(self):
         params = self.get_params()
         if not params: return
 
         text = handle_docstring(*params)
         if text:
-            app_log(LOG_SET_PANEL, LOG_PANEL_OUTPUT)
-            app_log(LOG_CLEAR, '')
+            app_log(LOG_CLEAR, '', panel=LOG_PANEL_OUTPUT)
             for s in text.splitlines():
-                app_log(LOG_ADD, s)
-            #
+                app_log(LOG_ADD, s, panel=LOG_PANEL_OUTPUT)
+
             ed.cmd(cmds.cmd_ShowPanelOutput)
             ed.focus()
         else:
             msg_status('Cannot find doc-string')
 
-
     def show_usages(self):
         params = self.get_params()
-        if not params: return
+        if not params:
+            return
 
         items = handle_usages(*params)
         if not items:
@@ -93,20 +106,21 @@ class Command:
             return
 
         items_show = [
-            os.path.basename(item[0])+
-            ', Line %s, Col %d' %(item[1]+1, item[2]+1)+
-            '\t'+item[0]
+            os.path.basename(item[0]) +
+            ', Line %s, Col %d' % (item[1] + 1, item[2] + 1) +
+            '\t' + item[0]
             for item in items
             ]
         res = dlg_menu(MENU_LIST_ALT, '\n'.join(items_show))
-        if res is None: return
+        if res is None:
+            return
 
         item = items[res]
         self.goto_file(item[0], item[1], item[2])
 
-
     def goto_file(self, filename, num_line, num_col):
-        if not os.path.isfile(filename): return
+        if not os.path.isfile(filename):
+            return
 
         file_open(filename)
         ed.set_prop(PROP_LINE_TOP, str(max(0, num_line-LINE_GOTO_OFFSET)))
@@ -117,9 +131,12 @@ class Command:
 
 
     def get_params(self):
+        if IS_NT and not self.env:
+            return
         fn = ed.get_filename()
         carets = ed.get_carets()
-        if len(carets)!=1: return
+        if len(carets)!=1:
+            return
         x0, y0, x1, y1 = carets[0]
 
         if not 0 <= y0 < ed.get_line_count():
@@ -129,6 +146,24 @@ class Command:
             return
 
         text = ed.get_text_all()
-        if not text: return
+        if not text:
+            return
 
-        return (text, fn, y0, x0)
+        return (text, fn, y0, x0, self.sys_path, self.env)
+
+    def select_py_interpreter(self):
+        #global env
+        #global sys_path
+        filters = 'Python|*.exe' if IS_NT else ''
+        selected_env_path = dlg_file(True, '!', '', filters)
+        env_ = create_env(selected_env_path)
+        if env_:
+            ini_write(INI, PY, ENV, selected_env_path)
+            self.env = env_
+            self.sys_path = env_sys_path(env_)
+            return env_
+        else:
+            if self.env_path:
+                print('Current Python interpreter: {}'.format(self.env_path))
+            else:
+                print('Current Python interpreter: {}'.format(sys.executable))
