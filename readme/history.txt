@@ -1,6 +1,7 @@
 
 2018.10.11
-* renamed plugin to longer name Python IntelliSense
+* renamed plugin to Python IntelliSense
++ updated Jedi to 0.13.1
 
 2018.08.26
 + now you can select diferent Python interpeter (patch by @OlehL)
