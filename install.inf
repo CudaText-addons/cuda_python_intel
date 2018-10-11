@@ -1,5 +1,5 @@
 [info]
-title=Python Intel
+title=Python IntelliSense
 desc=Supports intelligence commands for Python: 1) auto-completion (Ctrl+Space), 2) goto-definition (item in context menu), 3) show function call-tip (Ctrl+Shift+Space), 4) show function doc-string, 5) show usages of name. Based on Jedi library.
 type=cudatext-plugin
 subdir=cuda_python_intel
@@ -13,16 +13,15 @@ lexers=Python
 
 [item10]
 section=commands
-caption=Python Intel\Show doc-string
+caption=Python IntelliSense\Show doc-string
 method=show_docstring
 
 [item11]
 section=commands
-caption=Python Intel\Show usages
+caption=Python IntelliSense\Show usages
 method=show_usages
 
 [item20]
 section=commands
-caption=Python Intel\Select Python interpreter
+caption=Python IntelliSense\Select Python interpreter
 method=select_py_interpreter
-

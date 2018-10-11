@@ -1,3 +1,7 @@
+
+2018.10.11
+* renamed plugin to longer name Python IntelliSense
+
 2018.08.26
 + now you can select diferent Python interpeter (patch by @OlehL)
 - fix: crash on Windows (@OlehL)
