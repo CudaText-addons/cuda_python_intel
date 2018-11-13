@@ -4,11 +4,13 @@ from cudatext import *
 import cudatext_cmd as cmds
 from .intel_work import *
 
-LINE_GOTO_OFFSET = 5
 INI_FILE = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_python_intel.ini')
 INI_PY = 'python'
 INI_ENV = 'environment'
+
 IS_NT = os.name == 'nt'
+IS_LINUX = sys.platform == 'linux'
+LINE_GOTO_OFFSET = 5
 
 
 def is_wordchar(s):
@@ -153,11 +155,7 @@ class Command:
 
     def select_py_interpreter(self):
 
-        if IS_NT:
-            filters = 'Executables|*.exe'
-            fn = dlg_file(True, '!', '', filters)
-            if not fn: return
-        else:
+        if IS_LINUX:
             items = [
                 '/usr/bin/python',
                 '/usr/bin/python3',
@@ -165,6 +163,10 @@ class Command:
             r = dlg_menu(MENU_LIST, items, caption='Select Python interpreter')
             if r is None: return
             fn = items[r]
+        else:
+            filters = 'Executables|*.exe' if IS_NT else ''
+            fn = dlg_file(True, '!', '', filters)
+            if not fn: return
             
         env_ = create_env(fn)
         if env_:
