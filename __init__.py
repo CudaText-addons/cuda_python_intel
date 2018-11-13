@@ -10,6 +10,7 @@ INI_ENV = 'environment'
 
 IS_NT = os.name == 'nt'
 IS_LINUX = sys.platform == 'linux'
+IS_MAC = sys.platform == 'darwin'
 LINE_GOTO_OFFSET = 5
 
 
@@ -161,6 +162,13 @@ class Command:
                 '/usr/bin/python3',
                 ]
             r = dlg_menu(MENU_LIST, items, caption='Select Python interpreter')
+            if r is None: return
+            fn = items[r]
+        elif IS_MAC:
+            items = ['/Library/Frameworks/Python.framework/Versions/3.%d/bin/python3'%i for i in [3,4,5,6,7,8,9,10]]
+            items = [i for i in items if os.path.exists(i)]
+            items2 = [os.path.dirname(os.path.dirname(i)) for i in items]
+            r = dlg_menu(MENU_LIST, items2, caption='Select Python interpreter')
             if r is None: return
             fn = items[r]
         else:
