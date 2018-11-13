@@ -1,13 +1,16 @@
 
+2018.11.13
++ command "Select Python interpreter" shows fixed list (Py2, Py3 paths) on Unix
+
 2018.10.11
-* renamed plugin to Python IntelliSense
+* renamed plugin to "Python IntelliSense"
 + updated Jedi to 0.13.1
 
 2018.08.26
 + now you can select diferent Python interpeter (patch by @OlehL)
++ show 2 more commands in menu "Plugins - Python Intel"
 - fix: crash on Windows (@OlehL)
 - fix: avoid deprecated API
-+ add: show 2 commands in menu "Plugins - Python Intel"
 
 2018.08.18
 + updated Jedi to 0.12.1
@@ -33,9 +36,6 @@
 2017.02.14
 - fix: autocomplete didnt show after "ed."
 
-2016.10.08
-+ refactor
-
 2016.09.23
 + improve "Show func hint"
 + refactor: jump to file
@@ -45,10 +45,7 @@
 + cmd "Show usages" (not in Plugins menu)
 
 2016.09.15
-+ upd Jedi to 0.10.0, with patch for missed pydoc_data module
++ update Jedi to 0.10.0, with patch for missed pydoc_data module
 
-1.0.3
-- upd for new api
-
-1.0.0 (jan 2016)
-init
+2016.01
+initial
