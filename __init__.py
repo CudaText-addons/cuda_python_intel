@@ -5,9 +5,9 @@ import cudatext_cmd as cmds
 from .intel_work import *
 
 LINE_GOTO_OFFSET = 5
-INI = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_python_intel.ini')
-PY = 'python'
-ENV = 'environment'
+INI_FILE = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_python_intel.ini')
+INI_PY = 'python'
+INI_ENV = 'environment'
 IS_NT = os.name == 'nt'
 
 
@@ -20,12 +20,12 @@ class Command:
     def __init__(self):
         self.env = None
         self.sys_path = None
-        self.env_path = ini_read(INI, PY, ENV, '')
+        self.env_path = ini_read(INI_FILE, INI_PY, INI_ENV, '')
         if self.env_path:
             self.env = create_env(self.env_path)
             self.sys_path = env_sys_path(self.env)
         if IS_NT and not self.env:
-            print("   ! Python interpreter not selected.\n   ! You can't use Python Intel")
+            print("Error: Python interpreter not selected. You cannot use Python IntelliSense.")
 
     def on_complete(self, ed_self):
         params = self.get_params()
@@ -152,18 +152,26 @@ class Command:
         return (text, fn, y0, x0, self.sys_path, self.env)
 
     def select_py_interpreter(self):
-        #global env
-        #global sys_path
-        filters = 'Python|*.exe' if IS_NT else ''
-        selected_env_path = dlg_file(True, '!', '', filters)
-        env_ = create_env(selected_env_path)
+
+        if IS_NT:
+            filters = 'Executables|*.exe'
+            fn = dlg_file(True, '!', '', filters)
+            if not fn: return
+        else:
+            items = [
+                '/usr/bin/python',
+                '/usr/bin/python3',
+                ]
+            r = dlg_menu(MENU_LIST, items, caption='Select Python interpreter')
+            if r is None: return
+            fn = items[r]
+            
+        env_ = create_env(fn)
         if env_:
-            ini_write(INI, PY, ENV, selected_env_path)
+            ini_write(INI_FILE, INI_PY, INI_ENV, fn)
             self.env = env_
             self.sys_path = env_sys_path(env_)
             return env_
         else:
-            if self.env_path:
-                print('Current Python interpreter: {}'.format(self.env_path))
-            else:
-                print('Current Python interpreter: {}'.format(sys.executable))
+            fn = self.env_path if self.env_path else sys.executable
+            print('Current Python interpreter: '+fn)
