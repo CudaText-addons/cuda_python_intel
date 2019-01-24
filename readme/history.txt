@@ -1,4 +1,7 @@
 
+2019.01.24
++ updated Parso lib
+
 2018.12.16
 + updated Jedi to 0.13.2
 
