@@ -9,6 +9,7 @@ from parso.python.parser import Parser
 from parso.python import tree
 
 from jedi._compatibility import u
+from jedi.evaluate.base_context import NO_CONTEXTS
 from jedi.evaluate.syntax_tree import eval_atom
 from jedi.evaluate.helpers import evaluate_call_of_leaf
 from jedi.evaluate.compiled import get_string_context_set
@@ -20,7 +21,7 @@ CompletionParts = namedtuple('CompletionParts', ['path', 'has_dot', 'name'])
 
 def sorted_definitions(defs):
     # Note: `or ''` below is required because `module_path` could be
-    return sorted(defs, key=lambda x: (x.module_path or '', x.line or 0, x.column or 0))
+    return sorted(defs, key=lambda x: (x.module_path or '', x.line or 0, x.column or 0, x.name))
 
 
 def get_on_completion_name(module_node, lines, position):
@@ -130,7 +131,10 @@ def get_stack_at_position(grammar, code_lines, module_node, pos):
         p.parse(tokens=tokenize_without_endmarker(code))
     except EndMarkerReached:
         return p.stack
-    raise SystemError("This really shouldn't happen. There's a bug in Jedi.")
+    raise SystemError(
+        "This really shouldn't happen. There's a bug in Jedi:\n%s"
+        % list(tokenize_without_endmarker(code))
+    )
 
 
 def evaluate_goto_definition(evaluator, context, leaf):
@@ -140,15 +144,19 @@ def evaluate_goto_definition(evaluator, context, leaf):
         return evaluator.goto_definitions(context, leaf)
 
     parent = leaf.parent
+    definitions = NO_CONTEXTS
     if parent.type == 'atom':
-        return context.eval_node(leaf.parent)
+        # e.g. `(a + b)`
+        definitions = context.eval_node(leaf.parent)
     elif parent.type == 'trailer':
-        return evaluate_call_of_leaf(context, leaf)
+        # e.g. `a()`
+        definitions = evaluate_call_of_leaf(context, leaf)
     elif isinstance(leaf, tree.Literal):
+        # e.g. `"foo"` or `1.0`
         return eval_atom(context, leaf)
     elif leaf.type in ('fstring_string', 'fstring_start', 'fstring_end'):
         return get_string_context_set(evaluator)
-    return []
+    return definitions
 
 
 CallSignatureDetails = namedtuple(
@@ -253,5 +261,5 @@ def cache_call_signatures(evaluator, context, bracket_leaf, code_lines, user_pos
     yield evaluate_goto_definition(
         evaluator,
         context,
-        bracket_leaf.get_previous_leaf()
+        bracket_leaf.get_previous_leaf(),
     )
