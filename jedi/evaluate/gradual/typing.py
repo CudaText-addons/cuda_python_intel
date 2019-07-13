@@ -19,7 +19,7 @@ from jedi.evaluate.filters import FilterWrapper
 from jedi.evaluate.names import NameWrapper, AbstractTreeName, \
     AbstractNameDefinition, ContextName
 from jedi.evaluate.helpers import is_string
-from jedi.evaluate.context.klass import ClassMixin
+from jedi.evaluate.context.klass import ClassMixin, ClassFilter
 
 _PROXY_CLASS_TYPES = 'Tuple Generic Protocol Callable Type'.split()
 _TYPE_ALIAS_TYPES = {
@@ -54,12 +54,15 @@ class _BaseTypingContext(Context):
         return self._tree_name
 
     def get_filters(self, *args, **kwargs):
-        # TODO this is obviously wrong.
-        class EmptyFilter():
-            def get(self, name):
+        # TODO this is obviously wrong. Is it though?
+        class EmptyFilter(ClassFilter):
+            def __init__(self):
+                pass
+
+            def get(self, name, **kwargs):
                 return []
 
-            def values(self):
+            def values(self, **kwargs):
                 return []
 
         yield EmptyFilter()
@@ -112,6 +115,8 @@ class TypingModuleName(NameWrapper):
             yield builtin_from_name(evaluator, u'True')
         elif name == 'overload':
             yield OverloadFunction.create_cached(evaluator, self.parent_context, self.tree_name)
+        elif name == 'NewType':
+            yield NewTypeFunction.create_cached(evaluator, self.parent_context, self.tree_name)
         elif name == 'cast':
             # TODO implement cast
             yield CastFunction.create_cached(evaluator, self.parent_context, self.tree_name)
@@ -454,6 +459,32 @@ class OverloadFunction(_BaseTypingContext):
     def py__call__(self, func_context_set):
         # Just pass arguments through.
         return func_context_set
+
+
+class NewTypeFunction(_BaseTypingContext):
+    def py__call__(self, arguments):
+        ordered_args = arguments.unpack()
+        next(ordered_args, (None, None))
+        _, second_arg = next(ordered_args, (None, None))
+        if second_arg is None:
+            return NO_CONTEXTS
+        return ContextSet(
+            NewType(
+                self.evaluator,
+                contextualized_node.context,
+                contextualized_node.node,
+                second_arg.infer(),
+            ) for contextualized_node in arguments.get_calling_nodes())
+
+
+class NewType(Context):
+    def __init__(self, evaluator, parent_context, tree_node, type_context_set):
+        super(NewType, self).__init__(evaluator, parent_context)
+        self._type_context_set = type_context_set
+        self.tree_node = tree_node
+
+    def py__call__(self, arguments):
+        return self._type_context_set.execute_annotation()
 
 
 class CastFunction(_BaseTypingContext):

@@ -361,9 +361,9 @@ except NameError:
     FileNotFoundError = IOError
 
 try:
-    NotADirectoryError = NotADirectoryError
+    IsADirectoryError = IsADirectoryError
 except NameError:
-    NotADirectoryError = IOError
+    IsADirectoryError = IOError
 
 try:
     PermissionError = PermissionError

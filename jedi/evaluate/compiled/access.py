@@ -412,7 +412,7 @@ class DirectObjectAccess(object):
                 name=p.name,
                 has_default=p.default is not p.empty,
                 default=self._create_access_path(p.default),
-                default_string=str(p.default),
+                default_string=repr(p.default),
                 has_annotation=p.annotation is not p.empty,
                 annotation=self._create_access_path(p.annotation),
                 annotation_string=str(p.default),
@@ -447,6 +447,17 @@ class DirectObjectAccess(object):
             # at least these errors that might occur if something is wrong with
             # the signature. In that case we just want a simple escape for now.
             raise ValueError
+
+    def get_return_annotation(self):
+        try:
+            o = self._obj.__annotations__.get('return')
+        except AttributeError:
+            return None
+
+        if o is None:
+            return None
+
+        return self._create_access_path(o)
 
     def negate(self):
         return self._create_access_path(-self._obj)

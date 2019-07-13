@@ -25,7 +25,9 @@ class AbstractSignature(object):
                     yield '/'
                     is_positional = False
 
-                if kind == Parameter.KEYWORD_ONLY and not is_kw_only:
+                if kind == Parameter.VAR_POSITIONAL:
+                    is_kw_only = True
+                elif kind == Parameter.KEYWORD_ONLY and not is_kw_only:
                     yield '*'
                     is_kw_only = True
 

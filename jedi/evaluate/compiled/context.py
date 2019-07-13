@@ -46,6 +46,11 @@ class CompiledObject(Context):
         self.access_handle = access_handle
 
     def py__call__(self, arguments):
+        return_annotation = self.access_handle.get_return_annotation()
+        if return_annotation is not None:
+            # TODO the return annotation may also be a string.
+            return create_from_access_path(self.evaluator, return_annotation).execute_annotation()
+
         try:
             self.access_handle.getattr_paths(u'__call__')
         except AttributeError:
@@ -122,7 +127,10 @@ class CompiledObject(Context):
             signature_params = self.access_handle.get_signature_params()
         except ValueError:  # Has no signature
             params_str, ret = self._parse_function_doc()
-            tokens = params_str.split(',')
+            if not params_str:
+                tokens = []
+            else:
+                tokens = params_str.split(',')
             if self.access_handle.ismethoddescriptor():
                 tokens.insert(0, 'self')
             for p in tokens:
@@ -276,7 +284,11 @@ class CompiledName(AbstractNameDefinition):
 
     @property
     def api_type(self):
-        return next(iter(self.infer())).api_type
+        api = self.infer()
+        # If we can't find the type, assume it is an instance variable
+        if not api:
+            return "instance"
+        return next(iter(api)).api_type
 
     @underscore_memoization
     def infer(self):
@@ -285,9 +297,7 @@ class CompiledName(AbstractNameDefinition):
         )])
 
 
-class SignatureParamName(AbstractNameDefinition, ParamNameInterface):
-    api_type = u'param'
-
+class SignatureParamName(ParamNameInterface, AbstractNameDefinition):
     def __init__(self, compiled_obj, signature_param):
         self.parent_context = compiled_obj.parent_context
         self._signature_param = signature_param
@@ -297,7 +307,7 @@ class SignatureParamName(AbstractNameDefinition, ParamNameInterface):
         return self._signature_param.name
 
     def to_string(self):
-        s = self.string_name
+        s = self._kind_string() + self.string_name
         if self._signature_param.has_annotation:
             s += ': ' + self._signature_param.annotation_string
         if self._signature_param.has_default:
@@ -322,9 +332,7 @@ class SignatureParamName(AbstractNameDefinition, ParamNameInterface):
         return contexts
 
 
-class UnresolvableParamName(AbstractNameDefinition, ParamNameInterface):
-    api_type = u'param'
-
+class UnresolvableParamName(ParamNameInterface, AbstractNameDefinition):
     def __init__(self, compiled_obj, name, default):
         self.parent_context = compiled_obj.parent_context
         self.string_name = name

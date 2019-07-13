@@ -151,6 +151,16 @@ class TreeNameDefinition(AbstractTreeName):
 
 
 class ParamNameInterface(object):
+    api_type = u'param'
+
+    def _kind_string(self):
+        kind = self.get_kind()
+        if kind == Parameter.VAR_POSITIONAL:  # *args
+            return '*'
+        if kind == Parameter.VAR_KEYWORD:  # **kwargs
+            return '**'
+        return ''
+
     def get_kind(self):
         raise NotImplementedError
 
@@ -158,15 +168,22 @@ class ParamNameInterface(object):
         raise NotImplementedError
 
 
-class ParamName(AbstractTreeName, ParamNameInterface):
-    api_type = u'param'
-
+class ParamName(ParamNameInterface, AbstractTreeName):
     def __init__(self, parent_context, tree_name):
         self.parent_context = parent_context
         self.tree_name = tree_name
 
     def _get_param_node(self):
         return search_ancestor(self.tree_name, 'param')
+
+    @property
+    def string_name(self):
+        name = self.tree_name.value
+        if name.startswith('__'):
+            # Params starting with __ are an equivalent to positional only
+            # variables in typeshed.
+            name = name[2:]
+        return name
 
     def get_kind(self):
         tree_param = self._get_param_node()
@@ -175,17 +192,29 @@ class ParamName(AbstractTreeName, ParamNameInterface):
         if tree_param.star_count == 2:  # **kwargs
             return Parameter.VAR_KEYWORD
 
+        # Params starting with __ are an equivalent to positional only
+        # variables in typeshed.
+        if tree_param.name.value.startswith('__'):
+            return Parameter.POSITIONAL_ONLY
+
         parent = tree_param.parent
+        param_appeared = False
         for p in parent.children:
-            if p.type == 'param':
-                if p.star_count:
+            if param_appeared:
+                if p == '/':
+                    return Parameter.POSITIONAL_ONLY
+            else:
+                if p == '*':
                     return Parameter.KEYWORD_ONLY
-                if p == tree_param:
-                    break
+                if p.type == 'param':
+                    if p.star_count:
+                        return Parameter.KEYWORD_ONLY
+                    if p == tree_param:
+                        param_appeared = True
         return Parameter.POSITIONAL_OR_KEYWORD
 
     def to_string(self):
-        output = self.string_name
+        output = self._kind_string() + self.string_name
         param_node = self._get_param_node()
         if param_node.annotation is not None:
             output += ': ' + param_node.annotation.get_code(include_prefix=False)

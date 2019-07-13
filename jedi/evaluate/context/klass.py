@@ -45,7 +45,7 @@ from jedi.evaluate import compiled
 from jedi.evaluate.lazy_context import LazyKnownContexts
 from jedi.evaluate.filters import ParserTreeFilter
 from jedi.evaluate.names import TreeNameDefinition, ContextName
-from jedi.evaluate.arguments import unpack_arglist
+from jedi.evaluate.arguments import unpack_arglist, ValuesArguments
 from jedi.evaluate.base_context import ContextSet, iterator_to_context_set, \
     NO_CONTEXTS
 from jedi.evaluate.context.function import FunctionAndClassBase
@@ -109,13 +109,27 @@ class ClassFilter(ParserTreeFilter):
             node = get_cached_parent_scope(self._used_names, node)
         return False
 
-    def _access_possible(self, name):
+    def _access_possible(self, name, from_instance=False):
+        # Filter for ClassVar variables
+        # TODO this is not properly done, yet. It just checks for the string
+        # ClassVar in the annotation, which can be quite imprecise. If we
+        # wanted to do this correct, we would have to resolve the ClassVar.
+        if not from_instance:
+            expr_stmt = name.get_definition()
+            if expr_stmt is not None and expr_stmt.type == 'expr_stmt':
+                annassign = expr_stmt.children[1]
+                if annassign.type == 'annassign':
+                    # TODO this is not proper matching
+                    if 'ClassVar' not in annassign.children[1].get_code():
+                        return False
+
+        # Filter for name mangling of private variables like __foo
         return not name.value.startswith('__') or name.value.endswith('__') \
             or self._equals_origin_scope()
 
-    def _filter(self, names):
+    def _filter(self, names, from_instance=False):
         names = super(ClassFilter, self)._filter(names)
-        return [name for name in names if self._access_possible(name)]
+        return [name for name in names if self._access_possible(name, from_instance)]
 
 
 class ClassMixin(object):
@@ -198,8 +212,14 @@ class ClassMixin(object):
         if not is_instance:
             from jedi.evaluate.compiled import builtin_from_name
             type_ = builtin_from_name(self.evaluator, u'type')
+            assert isinstance(type_, ClassContext)
             if type_ != self:
-                yield next(type_.get_filters())
+                for instance in type_.py__call__(ValuesArguments([])):
+                    instance_filters = instance.get_filters()
+                    # Filter out self filters
+                    next(instance_filters)
+                    next(instance_filters)
+                    yield next(instance_filters)
 
 
 class ClassContext(use_metaclass(CachedMetaClass, ClassMixin, FunctionAndClassBase)):

@@ -358,9 +358,10 @@ class BaseDefinition(object):
         return Definition(self._evaluator, context.name)
 
     def __repr__(self):
-        return "<%s full_name=%r, description=%r>" % (
+        return "<%s %sname=%r, description=%r>" % (
             self.__class__.__name__,
-            self.full_name,
+            'full_' if self.full_name else '',
+            self.full_name or self.name,
             self.description,
         )
 
@@ -529,17 +530,13 @@ class Definition(BaseDefinition):
         """
         typ = self.type
         tree_name = self._name.tree_name
+        if typ == 'param':
+            return typ + ' ' + self._name.to_string()
         if typ in ('function', 'class', 'module', 'instance') or tree_name is None:
             if typ == 'function':
                 # For the description we want a short and a pythonic way.
                 typ = 'def'
             return typ + ' ' + self._name.string_name
-        elif typ == 'param':
-            code = search_ancestor(tree_name, 'param').get_code(
-                include_prefix=False,
-                include_comma=False
-            )
-            return typ + ' ' + code
 
         definition = tree_name.get_definition() or tree_name
         # Remove the prefix, because that's not what we want for get_code
@@ -607,11 +604,9 @@ class CallSignature(Definition):
     It knows what functions you are currently in. e.g. `isinstance(` would
     return the `isinstance` function. without `(` it would return nothing.
     """
-    def __init__(self, evaluator, signature, bracket_start_pos, index, key_name_str):
+    def __init__(self, evaluator, signature, call_details):
         super(CallSignature, self).__init__(evaluator, signature.name)
-        self._index = index
-        self._key_name_str = key_name_str
-        self._bracket_start_pos = bracket_start_pos
+        self._call_details = call_details
         self._signature = signature
 
     @property
@@ -620,26 +615,7 @@ class CallSignature(Definition):
         The Param index of the current call.
         Returns None if the index cannot be found in the curent call.
         """
-        if self._key_name_str is not None:
-            for i, param in enumerate(self.params):
-                if self._key_name_str == param.name:
-                    return i
-            if self.params:
-                param_name = self.params[-1]._name
-                if param_name.tree_name is not None:
-                    if param_name.tree_name.get_definition().star_count == 2:
-                        return i
-            return None
-
-        if self._index >= len(self.params):
-            for i, param in enumerate(self.params):
-                tree_name = param._name.tree_name
-                if tree_name is not None:
-                    # *args case
-                    if tree_name.get_definition().star_count == 1:
-                        return i
-            return None
-        return self._index
+        return self._call_details.calculate_index(self._signature.get_param_names())
 
     @property
     def params(self):
@@ -651,7 +627,7 @@ class CallSignature(Definition):
         The indent of the bracket that is responsible for the last function
         call.
         """
-        return self._bracket_start_pos
+        return self._call_details.bracket_leaf.start_pos
 
     @property
     def _params_str(self):
@@ -662,7 +638,7 @@ class CallSignature(Definition):
         return '<%s: %s index=%r params=[%s]>' % (
             type(self).__name__,
             self._name.string_name,
-            self._index,
+            self.index,
             self._params_str,
         )
 
