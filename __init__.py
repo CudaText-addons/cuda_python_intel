@@ -126,8 +126,9 @@ class Command:
             return
 
         file_open(filename)
-        ed.set_prop(PROP_LINE_TOP, str(max(0, num_line-LINE_GOTO_OFFSET)))
-        ed.set_caret(num_col, num_line)
+        
+        ed.action(EDACTION_SHOW_POS, (num_col, num_line), (0, LINE_GOTO_OFFSET))
+        ed.set_caret(num_col, num_line, options=CARET_OPTION_UNFOLD)
 
         msg_status('Go to file: '+filename)
         print('Goto "%s", Line %d'%(filename, num_line+1))

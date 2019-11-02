@@ -1,4 +1,7 @@
 
+2019.11.02
++ on "go to definition", unfold target position
+
 2019.11.01
 + updated to Jedi 0.15.2, Parso 0.5.2
 
