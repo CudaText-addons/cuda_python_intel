@@ -4,7 +4,7 @@ desc=Supports intelligence commands for Python: 1) auto-completion (Ctrl+Space),
 type=cudatext-plugin
 subdir=cuda_python_intel
 homepage=https://github.com/CudaText-addons/cuda_python_intel
-api=1.0.252
+api=1.0.292
 
 [item1]
 section=events
