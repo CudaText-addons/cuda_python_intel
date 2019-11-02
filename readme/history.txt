@@ -1,5 +1,6 @@
 
-2019.11.02
+2019.11.03
++ ignoring auto-completion in syntax comments/strings
 + on "go to definition", unfold target position
 
 2019.11.01
