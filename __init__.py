@@ -32,12 +32,10 @@ class Command:
 
     def on_complete(self, ed_self):
         params = self.get_params()
-        if not params: return
+        if not params: return True
 
         text, fn, y0, x0, *args = params
         line = ed.get_text_line(y0)
-        if not 0 < x0 <= len(line):
-            return True
 
         #calc len left
         x = x0
@@ -149,6 +147,9 @@ class Command:
         if not 0 <= x0 <= len(line):
             return
 
+        if ed.get_token(TOKEN_GET_KIND, x0, y0) in ('c', 's'):
+            return
+
         text = ed.get_text_all()
         if not text:
             return
@@ -176,7 +177,7 @@ class Command:
             filters = 'Executables|*.exe' if IS_NT else ''
             fn = dlg_file(True, '!', '', filters)
             if not fn: return
-            
+
         env_ = create_env(fn)
         if env_:
             ini_write(INI_FILE, INI_PY, INI_ENV, fn)
