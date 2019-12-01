@@ -272,22 +272,17 @@ class Importer(object):
             for name in self.import_path
         )
 
-    def _sys_path_with_modifications(self):
+    def _sys_path_with_modifications(self, is_completion):
         if self._fixed_sys_path is not None:
             return self._fixed_sys_path
 
-        sys_path_mod = (
-            self._inference_state.get_sys_path()
+        return (
+            # For import completions we don't want to see init paths, but for
+            # inference we want to show the user as much as possible.
+            # See GH #1446.
+            self._inference_state.get_sys_path(add_init_paths=not is_completion)
             + sys_path.check_sys_path_modifications(self._module_context)
         )
-
-        if self._inference_state.environment.version_info.major == 2:
-            file_path = self._module_context.py__file__()
-            if file_path is not None:
-                # Python2 uses an old strange way of importing relative imports.
-                sys_path_mod.append(force_unicode(os.path.dirname(file_path)))
-
-        return sys_path_mod
 
     def follow(self):
         if not self.import_path or not self._infer_possible:
@@ -297,7 +292,7 @@ class Importer(object):
             force_unicode(i.value if isinstance(i, tree.Name) else i)
             for i in self.import_path
         )
-        sys_path = self._sys_path_with_modifications()
+        sys_path = self._sys_path_with_modifications(is_completion=False)
 
         value_set = [None]
         for i, name in enumerate(self.import_path):
@@ -326,7 +321,7 @@ class Importer(object):
                       for name in self._inference_state.compiled_subprocess.get_builtin_module_names()]
 
         if search_path is None:
-            search_path = self._sys_path_with_modifications()
+            search_path = self._sys_path_with_modifications(is_completion=True)
 
         for name in iter_module_names(self._inference_state, search_path):
             if in_module is None:
@@ -355,7 +350,7 @@ class Importer(object):
                         extname = modname[len('flask_'):]
                         names.append(ImportName(self._module_context, extname))
                 # Now the old style: ``flaskext.foo``
-                for dir in self._sys_path_with_modifications():
+                for dir in self._sys_path_with_modifications(is_completion=True):
                     flaskext = os.path.join(dir, 'flaskext')
                     if os.path.isdir(flaskext):
                         names += self._get_module_names([flaskext])
@@ -365,7 +360,9 @@ class Importer(object):
                 # Non-modules are not completable.
                 if value.api_type != 'module':  # not a module
                     continue
-                names += value.sub_modules_dict().values()
+                if not value.is_compiled():
+                    # sub_modules_dict is not implemented for compiled modules.
+                    names += value.sub_modules_dict().values()
 
             if not only_modules:
                 from jedi.inference.gradual.conversion import convert_values
