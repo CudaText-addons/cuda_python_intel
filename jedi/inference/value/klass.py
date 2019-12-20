@@ -25,7 +25,7 @@ py__iter__()                           Returns a generator of a set of types.
 py__class__()                          Returns the class of an instance.
 py__simple_getitem__(index: int/str)   Returns a a set of types of the index.
                                        Can raise an IndexError/KeyError.
-py__getitem__(indexes: ValueSet)     Returns a a set of types of the index.
+py__getitem__(indexes: ValueSet)       Returns a a set of types of the index.
 py__file__()                           Only on modules. Returns None if does
                                        not exist.
 py__package__() -> List[str]           Only on modules. For the import system.
@@ -50,13 +50,13 @@ from jedi.inference.base_value import ValueSet, iterator_to_value_set, \
     NO_VALUES
 from jedi.inference.context import ClassContext
 from jedi.inference.value.function import FunctionAndClassBase
+from jedi.inference.gradual.generics import LazyGenericManager, TupleGenericManager
 from jedi.plugins import plugin_manager
 
 
 class ClassName(TreeNameDefinition):
     def __init__(self, class_value, tree_name, name_context, apply_decorators):
-        super(ClassName, self).__init__(class_value.as_context(), tree_name)
-        self._name_context = name_context
+        super(ClassName, self).__init__(name_context, tree_name)
         self._apply_decorators = apply_decorators
         self._class_value = class_value
 
@@ -65,7 +65,7 @@ class ClassName(TreeNameDefinition):
         # We're using a different value to infer, so we cannot call super().
         from jedi.inference.syntax_tree import tree_name_to_values
         inferred = tree_name_to_values(
-            self.parent_context.inference_state, self._name_context, self.tree_name)
+            self.parent_context.inference_state, self.parent_context, self.tree_name)
 
         for result_value in inferred:
             if self._apply_decorators:
@@ -266,20 +266,22 @@ class ClassValue(use_metaclass(CachedMetaClass, ClassMixin, FunctionAndClassBase
         )]
 
     def py__getitem__(self, index_value_set, contextualized_node):
-        from jedi.inference.gradual.typing import LazyGenericClass
+        from jedi.inference.gradual.base import GenericClass
         if not index_value_set:
             return ValueSet([self])
         return ValueSet(
-            LazyGenericClass(
+            GenericClass(
                 self,
-                index_value,
-                value_of_index=contextualized_node.context,
+                LazyGenericManager(
+                    context_of_index=contextualized_node.context,
+                    index_value=index_value,
+                )
             )
             for index_value in index_value_set
         )
 
     def define_generics(self, type_var_dict):
-        from jedi.inference.gradual.typing import GenericClass
+        from jedi.inference.gradual.base import GenericClass
 
         def remap_type_vars():
             """
@@ -297,7 +299,7 @@ class ClassValue(use_metaclass(CachedMetaClass, ClassMixin, FunctionAndClassBase
         if type_var_dict:
             return ValueSet([GenericClass(
                 self,
-                generics=tuple(remap_type_vars())
+                TupleGenericManager(tuple(remap_type_vars()))
             )])
         return ValueSet({self})
 

@@ -107,11 +107,23 @@ class AbstractInstanceValue(Value):
         call_funcs = self.py__getattribute__('__call__').py__get__(self, self.class_value)
         return [s.bind(self) for s in call_funcs.get_signatures()]
 
+    def get_function_slot_names(self, name):
+        # Searches for Python functions in classes.
+        return []
+
+    def execute_function_slots(self, names, *inferred_args):
+        return ValueSet.from_sets(
+            name.infer().execute_with_values(*inferred_args)
+            for name in names
+        )
+
     def __repr__(self):
         return "<%s of %s>" % (self.__class__.__name__, self.class_value)
 
 
 class CompiledInstance(AbstractInstanceValue):
+    # This is not really a compiled class, it's just an instance from a
+    # compiled class.
     def __init__(self, inference_state, parent_context, class_value, arguments):
         super(CompiledInstance, self).__init__(inference_state, parent_context,
                                                class_value)
@@ -129,9 +141,6 @@ class CompiledInstance(AbstractInstanceValue):
     @property
     def name(self):
         return compiled.CompiledValueName(self, self.class_value.name.string_name)
-
-    def is_compiled(self):
-        return True
 
     def is_stub(self):
         return False
@@ -286,12 +295,6 @@ class _BaseTreeInstance(AbstractInstanceValue):
             if names:
                 return names
         return []
-
-    def execute_function_slots(self, names, *inferred_args):
-        return ValueSet.from_sets(
-            name.infer().execute_with_values(*inferred_args)
-            for name in names
-        )
 
 
 class TreeInstance(_BaseTreeInstance):
@@ -515,7 +518,7 @@ class InstanceClassFilter(AbstractFilter):
         ]
 
     def __repr__(self):
-        return '<%s for %s>' % (self.__class__.__name__, self._class_filter.context)
+        return '<%s for %s>' % (self.__class__.__name__, self._class_filter)
 
 
 class SelfAttributeFilter(ClassFilter):

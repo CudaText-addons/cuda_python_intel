@@ -17,7 +17,7 @@ from jedi.inference.compiled.access import _sentinel
 from jedi.inference.cache import inference_state_function_cache
 from jedi.inference.helpers import reraise_getitem_errors
 from jedi.inference.signature import BuiltinSignature
-from jedi.inference.context import CompiledContext
+from jedi.inference.context import CompiledContext, CompiledModuleContext
 
 
 class CheckAttribute(object):
@@ -264,6 +264,12 @@ class CompiledObject(Value):
             self.access_handle.execute_operation(other.access_handle, operator)
         )
 
+    def execute_annotation(self):
+        if self.access_handle.get_repr() == 'None':
+            # None as an annotation doesn't need to be executed.
+            return ValueSet([self])
+        return super(CompiledObject, self).execute_annotation()
+
     def negate(self):
         return create_from_access_path(self.inference_state, self.access_handle.negate())
 
@@ -271,6 +277,8 @@ class CompiledObject(Value):
         return NO_VALUES
 
     def _as_context(self):
+        if self.parent_context is None:
+            return CompiledModuleContext(self)
         return CompiledContext(self)
 
 
@@ -282,6 +290,8 @@ class CompiledName(AbstractNameDefinition):
 
     def _get_qualified_names(self):
         parent_qualified_names = self.parent_context.get_qualified_names()
+        if parent_qualified_names is None:
+            return None
         return parent_qualified_names + (self.string_name,)
 
     def __repr__(self):
@@ -389,26 +399,33 @@ class CompiledObjectFilter(AbstractFilter):
     def get(self, name):
         return self._get(
             name,
-            lambda: self.compiled_object.access_handle.is_allowed_getattr(name),
-            lambda: self.compiled_object.access_handle.dir(),
+            lambda name, unsafe: self.compiled_object.access_handle.is_allowed_getattr(name, unsafe),
+            lambda name: name in self.compiled_object.access_handle.dir(),
             check_has_attribute=True
         )
 
-    def _get(self, name, allowed_getattr_callback, dir_callback, check_has_attribute=False):
+    def _get(self, name, allowed_getattr_callback, in_dir_callback, check_has_attribute=False):
         """
         To remove quite a few access calls we introduced the callback here.
         """
-        has_attribute, is_descriptor = allowed_getattr_callback()
-        if check_has_attribute and not has_attribute:
-            return []
-
         # Always use unicode objects in Python 2 from here.
         name = force_unicode(name)
 
-        if (is_descriptor and not self._inference_state.allow_descriptor_getattr) or not has_attribute:
+        if self._inference_state.allow_descriptor_getattr:
+            pass
+
+        has_attribute, is_descriptor = allowed_getattr_callback(
+            name,
+            unsafe=self._inference_state.allow_descriptor_getattr
+        )
+        if check_has_attribute and not has_attribute:
+            return []
+
+        if (is_descriptor or not has_attribute) \
+                and not self._inference_state.allow_descriptor_getattr:
             return [self._get_cached_name(name, is_empty=True)]
 
-        if self.is_instance and name not in dir_callback():
+        if self.is_instance and not in_dir_callback(name):
             return []
         return [self._get_cached_name(name)]
 
@@ -423,11 +440,16 @@ class CompiledObjectFilter(AbstractFilter):
         from jedi.inference.compiled import builtin_from_name
         names = []
         needs_type_completions, dir_infos = self.compiled_object.access_handle.get_dir_infos()
+        # We could use `unsafe` here as well, especially as a parameter to
+        # get_dir_infos. But this would lead to a lot of property executions
+        # that are probably not wanted. The drawback for this is that we
+        # have a different name for `get` and `values`. For `get` we always
+        # execute.
         for name in dir_infos:
             names += self._get(
                 name,
-                lambda: dir_infos[name],
-                lambda: dir_infos.keys(),
+                lambda name, unsafe: dir_infos[name],
+                lambda name: name in dir_infos,
             )
 
         # ``dir`` doesn't include the type names.

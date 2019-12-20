@@ -12,10 +12,10 @@ from parso import ParserSyntaxError, parse
 from jedi._compatibility import force_unicode, Parameter
 from jedi.inference.cache import inference_state_method_cache
 from jedi.inference.base_value import ValueSet, NO_VALUES
-from jedi.inference.gradual.typing import TypeVar, LazyGenericClass, \
-    AbstractAnnotatedClass
-from jedi.inference.gradual.typing import GenericClass, \
-    TypingClassValueWithIndex
+from jedi.inference.gradual.base import DefineGenericBase, GenericClass
+from jedi.inference.gradual.generics import TupleGenericManager
+from jedi.inference.gradual.typing import TypingClassValueWithIndex
+from jedi.inference.gradual.type_var import TypeVar
 from jedi.inference.helpers import is_string
 from jedi.inference.compiled import builtin_from_name
 from jedi.inference.param import get_executed_param_names
@@ -118,13 +118,17 @@ def infer_param(function_value, param, ignore_stars=False):
         tuple_ = builtin_from_name(inference_state, 'tuple')
         return ValueSet([GenericClass(
             tuple_,
-            generics=(values,),
+            TupleGenericManager((values,)),
         ) for c in values])
     elif param.star_count == 2:
         dct = builtin_from_name(inference_state, 'dict')
+        generics = (
+            ValueSet([builtin_from_name(inference_state, 'str')]),
+            values
+        )
         return ValueSet([GenericClass(
             dct,
-            generics=(ValueSet([builtin_from_name(inference_state, 'str')]), values),
+            TupleGenericManager(generics),
         ) for c in values])
         pass
     return values
@@ -162,7 +166,6 @@ def _infer_param(function_value, param):
                 "Comments length != Params length %s %s",
                 params_comments, all_params
             )
-        from jedi.inference.value.instance import InstanceArguments
         if function_value.is_bound_method():
             if index == 0:
                 # Assume it's self, which is already handled
@@ -230,7 +233,7 @@ def infer_return_types(function, arguments):
 
     return ValueSet.from_sets(
         ann.define_generics(type_var_dict)
-        if isinstance(ann, (AbstractAnnotatedClass, TypeVar)) else ValueSet({ann})
+        if isinstance(ann, (DefineGenericBase, TypeVar)) else ValueSet({ann})
         for ann in annotation_values
     ).execute_annotation()
 
@@ -271,6 +274,39 @@ def infer_type_vars_for_execution(function, arguments, annotation_dict):
                     annotation_variable_results,
                     _infer_type_vars(ann, actual_value_set),
                 )
+    return annotation_variable_results
+
+
+def infer_return_for_callable(arguments, param_values, result_values):
+    result = NO_VALUES
+    for pv in param_values:
+        if pv.array_type == 'list':
+            type_var_dict = infer_type_vars_for_callable(arguments, pv.py__iter__())
+
+            result |= ValueSet.from_sets(
+                v.define_generics(type_var_dict)
+                if isinstance(v, (DefineGenericBase, TypeVar)) else ValueSet({v})
+                for v in result_values
+            ).execute_annotation()
+    return result
+
+
+def infer_type_vars_for_callable(arguments, lazy_params):
+    """
+    Infers type vars for the Calllable class:
+
+        def x() -> Callable[[Callable[..., _T]], _T]: ...
+    """
+    annotation_variable_results = {}
+    for (_, lazy_value), lazy_callable_param in zip(arguments.unpack(), lazy_params):
+        callable_param_values = lazy_callable_param.infer()
+        # Infer unknown type var
+        actual_value_set = lazy_value.infer()
+        for v in callable_param_values:
+            _merge_type_var_dicts(
+                annotation_variable_results,
+                _infer_type_vars(v, actual_value_set),
+            )
     return annotation_variable_results
 
 
@@ -315,7 +351,18 @@ def _infer_type_vars(annotation_value, value_set, is_class_value=False):
                             is_class_value=True,
                         )
                     )
-    elif isinstance(annotation_value, LazyGenericClass):
+        elif name == 'Callable':
+            given = annotation_value.get_generics()
+            if len(given) == 2:
+                for nested_annotation_value in given[1]:
+                    _merge_type_var_dicts(
+                        type_var_dict,
+                        _infer_type_vars(
+                            nested_annotation_value,
+                            value_set.execute_annotation(),
+                        )
+                    )
+    elif isinstance(annotation_value, GenericClass):
         name = annotation_value.py__name__()
         if name == 'Iterable':
             given = annotation_value.get_generics()
@@ -405,14 +452,19 @@ def find_unknown_type_vars(context, node):
                 for subscript_node in _unpack_subscriptlist(trailer.children[1]):
                     check_node(subscript_node)
         else:
-            type_var_set = context.infer_node(node)
-            for type_var in type_var_set:
-                if isinstance(type_var, TypeVar) and type_var not in found:
-                    found.append(type_var)
+            found[:] = _filter_type_vars(context.infer_node(node), found)
 
     found = []  # We're not using a set, because the order matters.
     check_node(node)
     return found
+
+
+def _filter_type_vars(value_set, found=()):
+    new_found = list(found)
+    for type_var in value_set:
+        if isinstance(type_var, TypeVar) and type_var not in found:
+            new_found.append(type_var)
+    return new_found
 
 
 def _unpack_subscriptlist(subscriptlist):

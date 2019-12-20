@@ -28,7 +28,7 @@ def get_call_signature_param_names(call_signatures):
                 yield p._name
 
 
-def filter_names(inference_state, completion_names, stack, like_name):
+def filter_names(inference_state, completion_names, stack, like_name, fuzzy):
     comp_dct = {}
     if settings.case_insensitive_completion:
         like_name = like_name.lower()
@@ -36,13 +36,17 @@ def filter_names(inference_state, completion_names, stack, like_name):
         string = name.string_name
         if settings.case_insensitive_completion:
             string = string.lower()
-
-        if string.startswith(like_name):
+        if fuzzy:
+            match = helpers.fuzzy_match(string, like_name)
+        else:
+            match = helpers.start_match(string, like_name)
+        if match:
             new = classes.Completion(
                 inference_state,
                 name,
                 stack,
-                len(like_name)
+                len(like_name),
+                is_fuzzy=fuzzy,
             )
             k = (new.name, new.complete)  # key
             if k in comp_dct and settings.no_completion_duplicates:
@@ -70,7 +74,7 @@ def get_flow_scope_node(module_node, position):
 
 class Completion:
     def __init__(self, inference_state, module_context, code_lines, position,
-                 call_signatures_callback):
+                 call_signatures_callback, fuzzy=False):
         self._inference_state = inference_state
         self._module_context = module_context
         self._module_node = module_context.tree_node
@@ -84,14 +88,20 @@ class Completion:
         self._position = position[0], position[1] - len(self._like_name)
         self._call_signatures_callback = call_signatures_callback
 
-    def completions(self):
+        self._fuzzy = fuzzy
+
+    def completions(self, fuzzy=False, **kwargs):
+        return self._completions(fuzzy, **kwargs)
+
+    def _completions(self, fuzzy):
         leaf = self._module_node.get_leaf_for_position(self._position, include_prefixes=True)
         string, start_leaf = _extract_string_while_in_string(leaf, self._position)
         if string is not None:
             completions = list(file_name_completions(
                 self._inference_state, self._module_context, start_leaf, string,
                 self._like_name, self._call_signatures_callback,
-                self._code_lines, self._original_position
+                self._code_lines, self._original_position,
+                fuzzy
             ))
             if completions:
                 return completions
@@ -99,7 +109,7 @@ class Completion:
         completion_names = self._get_value_completions(leaf)
 
         completions = filter_names(self._inference_state, completion_names,
-                                   self.stack, self._like_name)
+                                   self.stack, self._like_name, fuzzy)
 
         return sorted(completions, key=lambda x: (x.name.startswith('__'),
                                                   x.name.startswith('_'),
@@ -210,7 +220,15 @@ class Completion:
                 completion_names += self._global_completions()
                 completion_names += self._get_class_value_completions(is_function=False)
 
-            if 'trailer' in nonterminals:
+            # Apparently this looks like it's good enough to filter most cases
+            # so that signature completions don't randomly appear.
+            # To understand why this works, three things are important:
+            # 1. trailer with a `,` in it is either a subscript or an arglist.
+            # 2. If there's no `,`, it's at the start and only signatures start
+            #    with `(`. Other trailers could start with `.` or `[`.
+            # 3. Decorators are very primitive and have an optional `(` with
+            #    optional arglist in them.
+            if nodes[-1] in ['(', ','] and nonterminals[-1] in ('trailer', 'arglist', 'decorator'):
                 call_signatures = self._call_signatures_callback()
                 completion_names += get_call_signature_param_names(call_signatures)
 

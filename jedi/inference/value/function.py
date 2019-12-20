@@ -21,6 +21,7 @@ from jedi.inference.value import iterable
 from jedi import parser_utils
 from jedi.inference.parser_cache import get_yield_exprs
 from jedi.inference.helpers import values_from_qualified_names
+from jedi.inference.gradual.generics import TupleGenericManager
 
 
 class LambdaName(AbstractNameDefinition):
@@ -283,7 +284,7 @@ class BaseFunctionExecutionContext(ValueContext, TreeContextMixin):
         inference_state = self.inference_state
         is_coroutine = self.tree_node.parent.type in ('async_stmt', 'async_funcdef')
         is_generator = bool(get_yield_exprs(inference_state, self.tree_node))
-        from jedi.inference.gradual.typing import GenericClass
+        from jedi.inference.gradual.base import GenericClass
 
         if is_coroutine:
             if is_generator:
@@ -297,7 +298,7 @@ class BaseFunctionExecutionContext(ValueContext, TreeContextMixin):
                 generics = (yield_values.py__class__(), NO_VALUES)
                 return ValueSet(
                     # In Python 3.6 AsyncGenerator is still a class.
-                    GenericClass(c, generics)
+                    GenericClass(c, TupleGenericManager(generics))
                     for c in async_generator_classes
                 ).execute_annotation()
             else:
@@ -308,7 +309,7 @@ class BaseFunctionExecutionContext(ValueContext, TreeContextMixin):
                 # Only the first generic is relevant.
                 generics = (return_values.py__class__(), NO_VALUES, NO_VALUES)
                 return ValueSet(
-                    GenericClass(c, generics) for c in async_classes
+                    GenericClass(c, TupleGenericManager(generics)) for c in async_classes
                 ).execute_annotation()
         else:
             if is_generator:
