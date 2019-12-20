@@ -1,4 +1,7 @@
 
+2019.12.20
++ updated Jedi, Parso
+
 2019.11.03
 + ignoring auto-completion in syntax comments/strings
 + on "go to definition", unfold target position
