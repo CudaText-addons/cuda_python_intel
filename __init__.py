@@ -123,8 +123,11 @@ class Command:
         if not os.path.isfile(filename):
             return
 
-        file_open(filename)
-        
+        file_open(filename, options="/nohistory")
+
+        # needed because edaction_show_pos don't scroll w/o it
+        app_idle(False)
+
         ed.action(EDACTION_SHOW_POS, (num_col, num_line), (0, LINE_GOTO_OFFSET))
         ed.set_caret(num_col, num_line, options=CARET_OPTION_UNFOLD)
 
