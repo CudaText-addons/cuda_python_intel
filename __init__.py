@@ -174,7 +174,7 @@ class Command:
             self.app.environment = select_env()
 
         if IS_NT and not self.app.environment:
-            msg("ERROR: Python interpreter not selected. You can't use Python IntelliSense.")
+            msg("ERROR: Interpreter is not selected. Cannot use Python IntelliSense.")
 
     def on_open(self, ed_self):
         self.load_prj()
