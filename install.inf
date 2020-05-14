@@ -8,7 +8,7 @@ api=1.0.292
 
 [item1]
 section=events
-events=on_complete,on_goto_def,on_func_hint,on_open,on_tab_change
+events=on_complete,on_goto_def,on_func_hint,on_open~,on_tab_change~
 lexers=Python
 
 [item10]
