@@ -1,4 +1,13 @@
 
+2020.05.14
++ updated Jedi, Parso
++ big rework plugin
++ now Jedi use environment from cuda_project_man
++ cmd "Rename"
++ cmd "Inline"
++ cmd "Extract variable"
++ cmd "Extract function"
+
 2020.01.26
 + updated Jedi to 0.16.0
 - fix: "go to definition" did not scroll file to caret
