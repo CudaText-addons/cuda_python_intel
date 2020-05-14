@@ -18,6 +18,14 @@ IS_NT = os.name == 'nt'
 LINE_GOTO_OFFSET = 5
 
 
+def input_name(caption, name):
+    while True:
+        s = ct.dlg_input(caption, name)
+        if not s:
+            return
+        if (s != name) and s.isidentifier():
+            return s
+
 def is_wordchar(s):
     return (s == '_') or s.isalnum()
 
@@ -269,7 +277,8 @@ class Command:
         if not refs:
             return
         name = refs[0].name
-        new_name = ct.dlg_input('Rename', name)
+        
+        new_name = input_name('Rename to:', name)
         if not new_name:
             return
 
@@ -321,7 +330,7 @@ class Command:
         if not cursor:
             return
 
-        new_name = ct.dlg_input('Extract variable', '')
+        new_name = input_name('Extract variable:', '')
         if not new_name:
             return
 
@@ -352,7 +361,7 @@ class Command:
         if not cursor:
             return
 
-        new_name = ct.dlg_input('Extract function', '')
+        new_name = input_name('Extract function:', '')
         if not new_name:
             return
 
