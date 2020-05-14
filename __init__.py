@@ -31,7 +31,7 @@ def is_wordchar(s):
 
 
 def msg(*args):
-    print('Python IntelliSense: ', *args)
+    print('Python IntelliSense:', *args)
     ct.msg_status(', '.join([str(arg) for arg in args]))
 
 
