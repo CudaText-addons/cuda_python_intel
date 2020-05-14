@@ -5,8 +5,8 @@ Gives intelligence commands for Python lexer.
    To use it: place caret after incomplete function/class/variable/module name,
    and press CudaText hotkey for auto-completion (Ctrl+Space).
 2) Go to definition
-   To use it: place caret on a name of function/class/variable, and call
-   "Go to definition" menuitem from editor context menu, or use CudaText mouse shortcut.
+   To use it: place caret on a name of function/class/variable/module, and call
+   "Go to definition" item from editor context menu, or use CudaText mouse shortcut.
 3) Show function call-tip
    To use it: place caret after function name between () brackets, and press
    CudaText hotkey for "show function-hint" (Ctrl+Shift+Space).
