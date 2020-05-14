@@ -23,22 +23,22 @@ method=show_usages
 
 [item12]
 section=commands
-caption=Python IntelliSense\Rename
+caption=Python IntelliSense\Refactoring - Rename
 method=refactoring_rename
 
 [item13]
 section=commands
-caption=Python IntelliSense\Inline
+caption=Python IntelliSense\Refactoring - Inline
 method=refactoring_inline
 
 [item14]
 section=commands
-caption=Python IntelliSense\Extract variable
+caption=Python IntelliSense\Refactoring - Extract variable
 method=refactoring_extract_variable
 
 [item15]
 section=commands
-caption=Python IntelliSense\Extract function
+caption=Python IntelliSense\Refactoring - Extract function
 method=refactoring_extract_function
 
 [item20]
