@@ -8,7 +8,7 @@ api=1.0.292
 
 [item1]
 section=events
-events=on_complete,on_goto_def,on_func_hint
+events=on_complete,on_goto_def,on_func_hint,on_open,on_tab_change
 lexers=Python
 
 [item10]
@@ -20,6 +20,26 @@ method=show_docstring
 section=commands
 caption=Python IntelliSense\Show usages
 method=show_usages
+
+[item12]
+section=commands
+caption=Python IntelliSense\Rename
+method=refactoring_rename
+
+[item13]
+section=commands
+caption=Python IntelliSense\Inline
+method=refactoring_inline
+
+[item14]
+section=commands
+caption=Python IntelliSense\Extract variable
+method=refactoring_extract_variable
+
+[item15]
+section=commands
+caption=Python IntelliSense\Extract function
+method=refactoring_extract_function
 
 [item20]
 section=commands
