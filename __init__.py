@@ -41,7 +41,7 @@ def create_env(env_path):
         msg(repr(env).replace('Environment:', 'Python'))
         return env
     except jedi.InvalidPythonEnvironment:
-        msg('Error! Python interpreter not activate')
+        msg('Incorrect environment! Python interpreter is not activated')
         return
 
 
@@ -77,7 +77,7 @@ def goto_file(filename, num_line, num_col):
     ct.ed.set_caret(num_col, num_line, options=ct.CARET_OPTION_UNFOLD)
 
     ct.msg_status('Go to file: '+filename)
-    print('Goto "%s", Line %d' % (filename, num_line + 1))
+    print('Go to "%s", line %d' % (filename, num_line + 1))
 
 
 def diff_patch_code(changed_file):
