@@ -14,7 +14,7 @@ Gives intelligence commands for Python lexer.
 6) Rename
    Renames all references of the variable under the cursor.
 7) Inline
-   Inlines a variable under the cursor. This is basically the opposite of extracting a variable
+   Inlines a variable under the cursor. This is basically the opposite of extracting a variable.
 8) Extract variable
    Moves an expression to a new statemenet.
 9) Extract function
@@ -24,5 +24,7 @@ Based on Jedi:
   Jedi is a static analysis tool for Python that can be used in IDEs/editors.
   https://github.com/davidhalter/jedi
 
-Authors: Alexey T, OlehL.
+Authors:
+  Alexey Torgashin (CudaText)
+  Oleh Lutsak https://github.com/OlehL/
 License: MIT
