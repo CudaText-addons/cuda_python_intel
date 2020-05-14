@@ -3,10 +3,10 @@
 + updated Jedi to 0.17
 + big rework of plugin
 + now Jedi uses environment from Project Manager plugin
-+ command for refactoring: "Rename"
-+ command for refactoring: "Inline"
-+ command for refactoring: "Extract variable"
-+ command for refactoring: "Extract function"
++ command "Refactoring - Rename"
++ command "Refactoring - Inline"
++ command "Refactoring - Extract variable"
++ command "Refactoring - Extract function"
 
 2020.01.26
 + updated Jedi to 0.16.0
