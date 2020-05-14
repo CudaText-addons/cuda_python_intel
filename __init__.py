@@ -434,6 +434,8 @@ class Command:
 
         if items:
             text = items[0].docstring()
+        else:
+            return
 
         if text:
             ct.app_log(ct.LOG_CLEAR, '', panel=ct.LOG_PANEL_OUTPUT)
@@ -463,6 +465,8 @@ class Command:
                 modfile = d.module_path
                 if modfile and os.path.isfile(modfile):
                     usages += [(modfile, d.line-1, d.column)]
+        else:
+            return
 
         if not usages:
             ct.msg_status('Cannot find usages')
