@@ -11,11 +11,18 @@ Gives intelligence commands for Python lexer.
    Shows doc-string for function/class under caret, in the Output panel. Call it from F1-Commands menu.
 5) Show usages
    Menu shows files/line-numbers where identifier is used. Call it from F1-Commands menu.
-
+6) Rename
+   Renames all references of the variable under the cursor.
+7) Inline
+   Inlines a variable under the cursor. This is basically the opposite of extracting a variable
+8) Extract variable
+   Moves an expression to a new statemenet.
+9) Extract function
+   Moves an expression to a new function.
 
 Based on Jedi:
   Jedi is a static analysis tool for Python that can be used in IDEs/editors.
   https://github.com/davidhalter/jedi
 
-Author: Alexey T.
+Authors: Alexey T, OlehL.
 License: MIT
