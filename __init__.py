@@ -341,7 +341,7 @@ class Command:
                 until_line=cursor.row1,
                 until_column=cursor.x1,
                 new_name=new_name)
-        except ValueError:
+        except:
             msg("Can't do that. :(")
             return
 
