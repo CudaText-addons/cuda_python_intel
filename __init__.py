@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 import cudatext as ct
 import cudatext_cmd as cmds
@@ -38,7 +38,7 @@ def create_env(env_path):
 
 
 def select_env():
-    items = jedi.find_system_environments()
+    items = list(jedi.find_system_environments())
     names = [repr(i).replace('Environment:', 'Python') for i in items]
     names.append('Other...')
     i = ct.dlg_menu(ct.MENU_LIST, names, caption='Select Python interpreter')
@@ -50,7 +50,7 @@ def select_env():
         if not fn:
             return
     else:
-        fn = items[i]
+        fn = items[i].executable
     env = create_env(fn)
     if env:
         ct.ini_write(INI_FILE, INI_PY, INI_ENV, fn)
