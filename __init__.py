@@ -351,6 +351,8 @@ class Command:
         else:
             k, v = changed_files.popitem()
             diff_patch_code(v)
+            
+        ct.ed.set_caret(cursor.x, cursor.row)
 
     def refactoring_extract_function(self):
         """Moves an expression to a new function."""
@@ -382,6 +384,8 @@ class Command:
         else:
             k, v = changed_files.popitem()
             diff_patch_code(v)
+
+        ct.ed.set_caret(cursor.x, cursor.row)
 
     def on_goto_def(self, ed_self):
         """Goes to the name that defined the object under the cursor."""
