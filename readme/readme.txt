@@ -30,6 +30,8 @@ Refactoring commands, they change editor text:
 *  Refactoring - Extract function
    Moves an expression to a new function.
 
+Plugin handles CudaText projects (internally calling Project Manager plugin).
+
 Based on Jedi library:
   Jedi is a static analysis tool for Python that can be used in IDEs/editors.
   https://github.com/davidhalter/jedi
