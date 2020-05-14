@@ -408,6 +408,10 @@ class Command:
         if modfile is None:
             return True
 
+        # handle jump to "__file__"
+        if d.line is None:
+            return
+        
         res = (modfile, d.line-1, d.column)
         if res is None:
             return True
