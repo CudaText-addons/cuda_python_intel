@@ -342,7 +342,7 @@ class Command:
                 until_column=cursor.x1,
                 new_name=new_name)
         except:
-            msg("Can't do that. :(")
+            msg("Cannot refactor, Jedi gave an error. :(")
             return
 
         changed_files = item.get_changed_files()
@@ -374,8 +374,8 @@ class Command:
                 until_line=cursor.row1,
                 until_column=cursor.x1,
                 new_name=new_name)
-        except ValueError:
-            msg("Can't do that. :(")
+        except:
+            msg("Cannot refactor, Jedi gave an error. :(")
             return
 
         changed_files = item.get_changed_files()
