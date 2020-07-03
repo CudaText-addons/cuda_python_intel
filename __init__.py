@@ -184,6 +184,8 @@ class Command:
 
     def load_prj(self):
         nodes = prj_man.global_project_info.get('nodes')
+        if not nodes:
+            return
         fn = ct.ed.get_filename()
 
         if fn == self.fn and [x for x in nodes if x in self.nodes]:
