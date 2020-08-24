@@ -77,7 +77,7 @@ def goto_file(filename, num_line, num_col):
     ct.ed.set_caret(num_col, num_line, options=ct.CARET_OPTION_UNFOLD)
 
     ct.msg_status('Go to file: '+filename)
-    print('Go to "%s", line %d' % (filename, num_line + 1))
+    #print('Go to "%s", line %d' % (filename, num_line + 1))
 
 
 def diff_patch_code(changed_file):
