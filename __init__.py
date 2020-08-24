@@ -11,12 +11,21 @@ import cuda_project_man as prj_man
 INI_FILE = os.path.join(ct.app_path(ct.APP_DIR_SETTINGS), 'cuda_python_intel.ini')
 INI_PY = 'python'
 INI_ENV = 'environment'
+HOMEDIR = os.path.expanduser('~')
 
 IS_NT = os.name == 'nt'
 # IS_LINUX = sys.platform == 'linux'
 # IS_MAC = sys.platform == 'darwin'
 LINE_GOTO_OFFSET = 5
 
+
+def pretty_path(s):
+    if not IS_NT:
+        if s==HOMEDIR:
+            s = '~'
+        elif s.startswith(HOMEDIR+'/'):
+            s = '~'+s[len(HOMEDIR):]
+    return s
 
 def input_name(caption, name):
     while True:
@@ -495,7 +504,7 @@ class Command:
         for item in usages:
             _fn = item[0]
             _fn1 = os.path.basename(_fn)
-            _dir = os.path.dirname(_fn)
+            _dir = pretty_path(os.path.dirname(_fn))
             _line = item[1]
             _col = item[2]
             _s = '?'
