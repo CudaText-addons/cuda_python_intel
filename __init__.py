@@ -279,7 +279,7 @@ class Command:
         if not refs:
             return
         name = refs[0].name
-        
+
         new_name = input_name('Rename to:', name)
         if not new_name:
             return
@@ -353,7 +353,7 @@ class Command:
         else:
             k, v = changed_files.popitem()
             diff_patch_code(v)
-            
+
         ct.ed.set_caret(cursor.x, cursor.row)
 
     def refactoring_extract_function(self):
@@ -413,7 +413,7 @@ class Command:
         # handle jump to "__file__"
         if d.line is None:
             return
-        
+
         res = (modfile, d.line-1, d.column)
         if res is None:
             return True
@@ -491,12 +491,22 @@ class Command:
             ct.msg_status('Cannot find usages')
             return
 
-        items_show = [
-            ''.join([os.path.basename(item[0]),
-                     ', Line %s, Col %d' % (item[1] + 1, item[2] + 1),
-                     '\t',
-                     item[0]])
-            for item in usages]
+        items_show = []
+        for item in usages:
+            _fn = item[0]
+            _fn1 = os.path.basename(_fn)
+            _dir = os.path.dirname(_fn)
+            _line = item[1]
+            _col = item[2]
+            _s = '?'
+            if os.path.isfile(_fn):
+                with open(_fn, encoding='utf8', errors='replace') as f:
+                    for i in range(_line+1):
+                        _s = f.readline()
+            _s = '  '+_s.lstrip(' \t').rstrip('\n\r')
+            print(_fn1, _dir, _line, _col, _s)
+            items_show.append( '{}:{}:{} ({})\t{}'.format(_fn1, _line+1, _col+1, _dir, _s) )
+
         res = ct.dlg_menu(ct.MENU_LIST_ALT, '\n'.join(items_show))
         if res is None:
             return
