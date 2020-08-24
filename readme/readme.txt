@@ -3,23 +3,34 @@ Gives intelligence commands for Python lexer.
 
 *  Auto-completion
    To use it: place caret after incomplete function/class/variable/module name,
-   and press CudaText hotkey for auto-completion (Ctrl+Space).
+   and call CudaText command "auto-completion menu" (Ctrl+Space).
+
 *  Go to definition
    To use it: place caret on a name of function/class/variable/module, and call
-   "Go to definition" item from editor context menu, or use CudaText mouse shortcut.
+   CudaText command "go to definition" (or use menu item "Go to definition"
+   in the editor context menu, or use mouse shortcut).
+
 *  Show function call-tip
-   To use it: place caret after function name between () brackets, and press
-   CudaText hotkey for "show function-hint" (Ctrl+Shift+Space).
+   To use it: place caret after function name between () brackets, and call
+   CudaText command "show function-hint" (Ctrl+Shift+Space).
+   For example, enter such script, caret is shown as "|":
+     import os
+     fn = os.path.join(|)
+   Command will show the parameters of "os.path.join" in the floating panel
+   at the top of CudaText window.
+
 *  Show function doc-string
    Shows doc-string for function/class under caret, in the Output panel.
-   Call it from Command Palette.
+   Call this command from Command Palette.
+
 *  Show usages
    Shows menu with locations (file name, line number) where identifier under caret
-   is used. Jumps to chosen location.
+   is used. After choosing the item in menu, editor jumps to chosen location.
    Call it from Command Palette.
-   
+
+
 Refactoring commands, they change editor text:
-   
+
 *  Refactoring - Rename
    Renames all instances of identifier under the caret.
 *  Refactoring - Inline
