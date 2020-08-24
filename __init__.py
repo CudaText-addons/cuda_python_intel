@@ -516,7 +516,7 @@ class Command:
             print(_fn1, _dir, _line, _col, _s)
             items_show.append( '{}:{}:{} ({})\t{}'.format(_fn1, _line+1, _col+1, _dir, _s) )
 
-        res = ct.dlg_menu(ct.MENU_LIST_ALT, '\n'.join(items_show), caption='Usages')
+        res = ct.dlg_menu(ct.MENU_LIST_ALT, items_show, caption='Usages')
         if res is None:
             return
 
