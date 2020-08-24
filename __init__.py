@@ -512,9 +512,8 @@ class Command:
                 with open(_fn, encoding='utf8', errors='replace') as f:
                     for i in range(_line+1):
                         _s = f.readline()
-            _s = '  '+_s.lstrip(' \t').rstrip('\n\r')
-            print(_fn1, _dir, _line, _col, _s)
-            items_show.append( '{}:{}:{} ({})\t{}'.format(_fn1, _line+1, _col+1, _dir, _s) )
+            _s = _s.lstrip(' \t').rstrip('\n\r')
+            items_show.append( '{}:{}:{} ({})\t  {}'.format(_fn1, _line+1, _col+1, _dir, _s) )
 
         res = ct.dlg_menu(ct.MENU_LIST_ALT, items_show, caption='Usages')
         if res is None:
