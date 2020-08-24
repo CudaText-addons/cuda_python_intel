@@ -21,6 +21,7 @@ Gives intelligence commands for Python lexer.
 
 *  Plugin command "Show function doc-string".
    Shows doc-string for function/class name under caret, in the Output panel.
+   (To call Output panel, click on the lower part of CudaText sidebar.)
 
 *  Plugin command "Show usages".
    Shows menu with locations (file name, line number) where identifier under caret
