@@ -1,16 +1,16 @@
 Plugin for CudaText.
 Gives intelligence commands for Python lexer.
 
-*  Auto-completion
+*  Auto-completion.
    To use it: place caret after incomplete function/class/variable/module name,
    and call CudaText command "auto-completion menu" (Ctrl+Space).
 
-*  Go to definition
+*  Go to definition.
    To use it: place caret on a name of function/class/variable/module, and call
    CudaText command "go to definition" (or use menu item "Go to definition"
    in the editor context menu, or use mouse shortcut).
 
-*  Show function call-tip
+*  Show function call-tip.
    To use it: place caret after function name between () brackets, and call
    CudaText command "show function-hint" (Ctrl+Shift+Space).
    For example, enter such script, caret is shown as "|":
@@ -19,14 +19,12 @@ Gives intelligence commands for Python lexer.
    Command will show the parameters of "os.path.join" in the floating panel
    at the top of CudaText window.
 
-*  Show function doc-string
-   Shows doc-string for function/class under caret, in the Output panel.
-   Call this command from Command Palette.
+*  Plugin command "Show function doc-string".
+   Shows doc-string for function/class name under caret, in the Output panel.
 
-*  Show usages
+*  Plugin command "Show usages".
    Shows menu with locations (file name, line number) where identifier under caret
    is used. After choosing the item in menu, editor jumps to chosen location.
-   Call it from Command Palette.
 
 
 Refactoring commands, they change editor text:
