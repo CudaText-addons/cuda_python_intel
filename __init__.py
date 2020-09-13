@@ -8,15 +8,20 @@ import jedi
 import cuda_project_man as prj_man
 
 
-cfg_file = os.path.join(ct.app_path(ct.APP_DIR_SETTINGS), 'cuda_python_intel.ini')
-cfg_section = 'op'
+cfg_file = os.path.join(ct.app_path(ct.APP_DIR_SETTINGS), 'plugins.ini')
+cfg_section = 'python_intel'
 cfg_opt_env = 'environment'
+cfg_opt_menu_w = 'usages_menu_w'
+cfg_opt_menu_h = 'usages_menu_h'
 
 HOMEDIR = os.path.expanduser('~')
 IS_NT = os.name == 'nt'
 # IS_LINUX = sys.platform == 'linux'
 # IS_MAC = sys.platform == 'darwin'
 LINE_GOTO_OFFSET = 5
+
+opt_menu_w = int(ct.ini_read(cfg_file, cfg_section, cfg_opt_menu_w, '600'))
+opt_menu_h = int(ct.ini_read(cfg_file, cfg_section, cfg_opt_menu_h, '400'))
 
 
 def pretty_path(s):
@@ -515,7 +520,7 @@ class Command:
             _s = _s.lstrip(' \t').rstrip('\n\r')
             items_show.append( '{}:{}:{} ({})\t  {}'.format(_fn1, _line+1, _col+1, _dir, _s) )
 
-        res = ct.dlg_menu(ct.MENU_LIST_ALT, items_show, caption='Usages')
+        res = ct.dlg_menu(ct.MENU_LIST_ALT, items_show, caption='Usages', w=opt_menu_w, h=opt_menu_h)
         if res is None:
             return
 
@@ -524,3 +529,9 @@ class Command:
 
     def select_py_interpreter(self):
         select_env()
+
+    def config(self):
+
+        ct.ini_write(cfg_file, cfg_section, cfg_opt_menu_w, str(opt_menu_w))
+        ct.ini_write(cfg_file, cfg_section, cfg_opt_menu_h, str(opt_menu_h))
+        ct.file_open(cfg_file)

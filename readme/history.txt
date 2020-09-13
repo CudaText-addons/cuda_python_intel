@@ -1,4 +1,9 @@
 
+2020.09.13
+* changed location of config file, now it's settings/plugins.ini, section [python_intel]
++ add command "Options / Settings-plugins / Pyton Intellisense / Config"
++ add 2 options for size of "Usages" menu
+
 2020.08.24
 + show menu in command "Show usages" better: "filename:line:column (folder)"<break>"python_line"
 
