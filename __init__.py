@@ -8,11 +8,11 @@ import jedi
 import cuda_project_man as prj_man
 
 
-INI_FILE = os.path.join(ct.app_path(ct.APP_DIR_SETTINGS), 'cuda_python_intel.ini')
-INI_PY = 'python'
-INI_ENV = 'environment'
-HOMEDIR = os.path.expanduser('~')
+cfg_file = os.path.join(ct.app_path(ct.APP_DIR_SETTINGS), 'cuda_python_intel.ini')
+cfg_section = 'op'
+cfg_opt_env = 'environment'
 
+HOMEDIR = os.path.expanduser('~')
 IS_NT = os.name == 'nt'
 # IS_LINUX = sys.platform == 'linux'
 # IS_MAC = sys.platform == 'darwin'
@@ -70,7 +70,7 @@ def select_env():
         fn = items[i].executable
     env = create_env(fn)
     if env:
-        ct.ini_write(INI_FILE, INI_PY, INI_ENV, fn)
+        ct.ini_write(cfg_file, cfg_section, cfg_opt_env, fn)
         return env
 
 
@@ -175,7 +175,7 @@ class Command:
         self.fn = None
         self.nodes = []
 
-        self.env_path = ct.ini_read(INI_FILE, INI_PY, INI_ENV, '')
+        self.env_path = ct.ini_read(cfg_file, cfg_section, cfg_opt_env, '')
         if self.env_path:
             self.app.environment = create_env(self.env_path)
         if not self.app.environment:
