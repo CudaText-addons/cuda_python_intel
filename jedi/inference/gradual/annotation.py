@@ -6,13 +6,13 @@ as annotations in future python versions.
 """
 
 import re
+from inspect import Parameter
 
 from parso import ParserSyntaxError, parse
 
-from jedi._compatibility import force_unicode, Parameter
 from jedi.inference.cache import inference_state_method_cache
 from jedi.inference.base_value import ValueSet, NO_VALUES
-from jedi.inference.gradual.base import DefineGenericBase, GenericClass
+from jedi.inference.gradual.base import DefineGenericBaseClass, GenericClass
 from jedi.inference.gradual.generics import TupleGenericManager
 from jedi.inference.gradual.type_var import TypeVar
 from jedi.inference.helpers import is_string
@@ -53,8 +53,10 @@ def _infer_annotation_string(context, string, index=None):
     value_set = context.infer_node(node)
     if index is not None:
         value_set = value_set.filter(
-            lambda value: value.array_type == u'tuple'  # noqa
-                            and len(list(value.py__iter__())) >= index
+            lambda value: (
+                value.array_type == 'tuple'
+                and len(list(value.py__iter__())) >= index
+            )
         ).py__simple_getitem__(index)
     return value_set
 
@@ -62,7 +64,7 @@ def _infer_annotation_string(context, string, index=None):
 def _get_forward_reference_node(context, string):
     try:
         new_node = context.inference_state.grammar.parse(
-            force_unicode(string),
+            string,
             start_symbol='eval_input',
             error_recovery=False
         )
@@ -138,8 +140,7 @@ def _infer_param(function_value, param):
     """
     annotation = param.annotation
     if annotation is None:
-        # If no Python 3-style annotation, look for a Python 2-style comment
-        # annotation.
+        # If no Python 3-style annotation, look for a comment annotation.
         # Identify parameters to function in the same sequence as they would
         # appear in a type comment.
         all_params = [child for child in param.parent.children
@@ -204,7 +205,8 @@ def infer_return_types(function, arguments):
     all_annotations = py__annotations__(function.tree_node)
     annotation = all_annotations.get("return", None)
     if annotation is None:
-        # If there is no Python 3-type annotation, look for a Python 2-type annotation
+        # If there is no Python 3-type annotation, look for an annotation
+        # comment.
         node = function.tree_node
         comment = parser_utils.get_following_comment_same_line(node)
         if comment is None:
@@ -229,7 +231,7 @@ def infer_return_types(function, arguments):
 
     return ValueSet.from_sets(
         ann.define_generics(type_var_dict)
-        if isinstance(ann, (DefineGenericBase, TypeVar)) else ValueSet({ann})
+        if isinstance(ann, (DefineGenericBaseClass, TypeVar)) else ValueSet({ann})
         for ann in annotation_values
     ).execute_annotation()
 
@@ -276,17 +278,18 @@ def infer_return_for_callable(arguments, param_values, result_values):
     all_type_vars = {}
     for pv in param_values:
         if pv.array_type == 'list':
-            type_var_dict = infer_type_vars_for_callable(arguments, pv.py__iter__())
+            type_var_dict = _infer_type_vars_for_callable(arguments, pv.py__iter__())
             all_type_vars.update(type_var_dict)
 
     return ValueSet.from_sets(
         v.define_generics(all_type_vars)
-        if isinstance(v, (DefineGenericBase, TypeVar)) else ValueSet({v})
+        if isinstance(v, (DefineGenericBaseClass, TypeVar))
+        else ValueSet({v})
         for v in result_values
     ).execute_annotation()
 
 
-def infer_type_vars_for_callable(arguments, lazy_params):
+def _infer_type_vars_for_callable(arguments, lazy_params):
     """
     Infers type vars for the Calllable class:
 
@@ -350,7 +353,7 @@ def merge_pairwise_generics(annotation_value, annotated_argument_class):
 
     type_var_dict = {}
 
-    if not isinstance(annotated_argument_class, DefineGenericBase):
+    if not isinstance(annotated_argument_class, DefineGenericBaseClass):
         return type_var_dict
 
     annotation_generics = annotation_value.get_generics()
@@ -359,12 +362,7 @@ def merge_pairwise_generics(annotation_value, annotated_argument_class):
     for annotation_generics_set, actual_generic_set in zip(annotation_generics, actual_generics):
         merge_type_var_dicts(
             type_var_dict,
-            annotation_generics_set.infer_type_vars(
-                actual_generic_set,
-                # This is a note to ourselves that we have already
-                # converted the instance representation to its class.
-                is_class_value=True,
-            ),
+            annotation_generics_set.infer_type_vars(actual_generic_set.execute_annotation()),
         )
 
     return type_var_dict

@@ -1,7 +1,6 @@
-from os.path import dirname, basename, join, relpath
-import os
-import re
 import difflib
+from pathlib import Path
+from typing import Dict, Iterable, Tuple
 
 from parso import split_lines
 
@@ -13,7 +12,7 @@ EXPRESSION_PARTS = (
 ).split()
 
 
-class ChangedFile(object):
+class ChangedFile:
     def __init__(self, inference_state, from_path, to_path,
                  module_node, node_to_str_map):
         self._inference_state = inference_state
@@ -25,11 +24,33 @@ class ChangedFile(object):
     def get_diff(self):
         old_lines = split_lines(self._module_node.get_code(), keepends=True)
         new_lines = split_lines(self.get_new_code(), keepends=True)
-        project_path = self._inference_state.project._path
+
+        # Add a newline at the end if it's missing. Otherwise the diff will be
+        # very weird. A `diff -u file1 file2` would show the string:
+        #
+        #     \ No newline at end of file
+        #
+        # This is not necessary IMO, because Jedi does not really play with
+        # newlines and the ending newline does not really matter in Python
+        # files. ~dave
+        if old_lines[-1] != '':
+            old_lines[-1] += '\n'
+        if new_lines[-1] != '':
+            new_lines[-1] += '\n'
+
+        project_path = self._inference_state.project.path
+        if self._from_path is None:
+            from_p = ''
+        else:
+            from_p = self._from_path.relative_to(project_path)
+        if self._to_path is None:
+            to_p = ''
+        else:
+            to_p = self._to_path.relative_to(project_path)
         diff = difflib.unified_diff(
             old_lines, new_lines,
-            fromfile=relpath(self._from_path, project_path),
-            tofile=relpath(self._to_path, project_path),
+            fromfile=str(from_p),
+            tofile=str(to_p),
         )
         # Apparently there's a space at the end of the diff - for whatever
         # reason.
@@ -51,23 +72,21 @@ class ChangedFile(object):
         return '<%s: %s>' % (self.__class__.__name__, self._from_path)
 
 
-class Refactoring(object):
+class Refactoring:
     def __init__(self, inference_state, file_to_node_changes, renames=()):
         self._inference_state = inference_state
         self._renames = renames
         self._file_to_node_changes = file_to_node_changes
 
-    def get_changed_files(self):
-        """
-        Returns a path to ``ChangedFile`` map.
-        """
+    def get_changed_files(self) -> Dict[Path, ChangedFile]:
         def calculate_to_path(p):
             if p is None:
                 return p
+            p = str(p)
             for from_, to in renames:
-                if p.startswith(from_):
-                    p = to + p[len(from_):]
-            return p
+                if p.startswith(str(from_)):
+                    p = str(to) + p[len(str(from_)):]
+            return Path(p)
 
         renames = self.get_renames()
         return {
@@ -80,20 +99,18 @@ class Refactoring(object):
             ) for path, map_ in sorted(self._file_to_node_changes.items())
         }
 
-    def get_renames(self):
+    def get_renames(self) -> Iterable[Tuple[Path, Path]]:
         """
         Files can be renamed in a refactoring.
-
-        Returns ``Iterable[Tuple[str, str]]``.
         """
         return sorted(self._renames)
 
     def get_diff(self):
         text = ''
-        project_path = self._inference_state.project._path
+        project_path = self._inference_state.project.path
         for from_, to in self.get_renames():
             text += 'rename from %s\nrename to %s\n' \
-                % (relpath(from_, project_path), relpath(to, project_path))
+                % (from_.relative_to(project_path), to.relative_to(project_path))
 
         return text + ''.join(f.get_diff() for f in self.get_changed_files().values())
 
@@ -105,17 +122,14 @@ class Refactoring(object):
             f.apply()
 
         for old, new in self.get_renames():
-            os.rename(old, new)
+            old.rename(new)
 
 
 def _calculate_rename(path, new_name):
-    name = basename(path)
-    dir_ = dirname(path)
-    if name in ('__init__.py', '__init__.pyi'):
-        parent_dir = dirname(dir_)
-        return dir_, join(parent_dir, new_name)
-    ending = re.search(r'\.pyi?$', name).group(0)
-    return path, join(dir_, new_name + ending)
+    dir_ = path.parent
+    if path.name in ('__init__.py', '__init__.pyi'):
+        return dir_, dir_.parent.joinpath(new_name)
+    return path, dir_.joinpath(new_name + path.suffix)
 
 
 def rename(inference_state, definitions, new_name):
@@ -128,7 +142,8 @@ def rename(inference_state, definitions, new_name):
     for d in definitions:
         tree_name = d._name.tree_name
         if d.type == 'module' and tree_name is None:
-            file_renames.add(_calculate_rename(d.module_path, new_name))
+            p = None if d.module_path is None else Path(d.module_path)
+            file_renames.add(_calculate_rename(p, new_name))
         else:
             # This private access is ok in a way. It's not public to
             # protect Jedi users from seeing it.
@@ -141,8 +156,8 @@ def rename(inference_state, definitions, new_name):
 def inline(inference_state, names):
     if not names:
         raise RefactoringError("There is no name under the cursor")
-    if any(n.api_type == 'module' for n in names):
-        raise RefactoringError("Cannot inline imports or modules")
+    if any(n.api_type in ('module', 'namespace') for n in names):
+        raise RefactoringError("Cannot inline imports, modules or namespaces")
     if any(n.tree_name is None for n in names):
         raise RefactoringError("Cannot inline builtins/extensions")
 
@@ -151,6 +166,8 @@ def inline(inference_state, names):
         raise RefactoringError("No definition found to inline")
     if len(definitions) > 1:
         raise RefactoringError("Cannot inline a name with multiple definitions")
+    if len(names) == 1:
+        raise RefactoringError("There are no references to this name")
 
     tree_name = definitions[0].tree_name
 
