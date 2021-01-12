@@ -278,19 +278,25 @@ class Command:
 
         text = []
         for c in completions:
-            pars = ''
-            if c.type == 'function':
-                p = c._get_docstring_signature()
-                if p:
-                    start_p = p.find("(")
-                    pars = p[start_p:]
-                else:
-                    pars = '()'
+            pars = self.get_attr(c)
             text.append('|'.join([c.type, c.name, pars]))
 
         complete = '\n'.join(text)
         ct.ed.complete(complete, len1, len2)
         return True
+
+    @staticmethod
+    def get_attr(c):
+        if c.type == 'function' or c.type == 'class':
+            sig = c.get_signatures()
+            if not sig:
+                return '()'
+            p = sig[0].to_string()
+            if not p:
+                return '()'
+            start_p = p.find("(")
+            return p[start_p:]
+        return ''
 
     def refactoring_rename(self):
         """Renames all references of the variable under the cursor."""
