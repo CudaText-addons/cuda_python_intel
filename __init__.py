@@ -16,8 +16,6 @@ cfg_opt_menu_h = 'usages_menu_h'
 
 HOMEDIR = os.path.expanduser('~')
 IS_NT = os.name == 'nt'
-# IS_LINUX = sys.platform == 'linux'
-# IS_MAC = sys.platform == 'darwin'
 LINE_GOTO_OFFSET = 5
 
 opt_menu_w = int(ct.ini_read(cfg_file, cfg_section, cfg_opt_menu_w, '600'))
@@ -26,11 +24,12 @@ opt_menu_h = int(ct.ini_read(cfg_file, cfg_section, cfg_opt_menu_h, '400'))
 
 def pretty_path(s):
     if not IS_NT:
-        if s==HOMEDIR:
+        if s == HOMEDIR:
             s = '~'
         elif s.startswith(HOMEDIR+'/'):
             s = '~'+s[len(HOMEDIR):]
     return s
+
 
 def input_name(caption, name):
     while True:
@@ -39,6 +38,7 @@ def input_name(caption, name):
             return
         if (s != name) and s.isidentifier():
             return s
+
 
 def is_wordchar(s):
     return (s == '_') or s.isalnum()
@@ -82,6 +82,7 @@ def select_env():
 def goto_file(filename, num_line, num_col):
     if not os.path.isfile(filename):
         return
+    filename = str(filename)
 
     ct.file_open(filename, options="/nohistory")
 
@@ -91,7 +92,6 @@ def goto_file(filename, num_line, num_col):
     ct.ed.set_caret(num_col, num_line, options=ct.CARET_OPTION_UNFOLD)
 
     ct.msg_status('Go to file: '+filename)
-    #print('Go to "%s", line %d' % (filename, num_line + 1))
 
 
 def diff_patch_code(changed_file):
@@ -189,6 +189,7 @@ class Command:
 
         if IS_NT and not self.app.environment:
             msg("ERROR: Interpreter is not selected. Cannot use Python IntelliSense.")
+        self.load_prj()
 
     def on_open(self, ed_self):
         self.load_prj()
@@ -208,24 +209,34 @@ class Command:
             self.nodes = nodes
             self.fn = fn
 
-        for n in nodes:
-            if n in fn:
-                _fn = prj_man.global_project_info['filename']
-                if os.path.exists(_fn):
-                    fn = _fn
-                break
-        if not os.path.isfile(fn):
-            self.app.project = None
-            return
-        fpath = os.path.dirname(fn)
+        prj_fn = prj_man.global_project_info['filename']
+        if os.path.isfile(fn):
+            for n in nodes:
+                if n in fn:
+                    if os.path.exists(prj_fn):
+                        fn = prj_fn
+                    break
+            fpath = os.path.dirname(fn)
+        else:
+            if os.path.exists(prj_fn):
+                fpath = os.path.dirname(prj_fn)
+            else:
+                fpath = None
 
         prj_sys_path = []
+        if os.path.isfile(self.fn):
+            prj_sys_path.append(os.path.dirname(self.fn))
         prj_sys_path.extend(sys.path)
         for n in nodes:
             if os.path.isdir(n):
                 prj_sys_path.append(n)
             elif os.path.isfile(n):
                 prj_sys_path.append(os.path.dirname(n))
+
+        # only for me
+        stubs_dir = os.path.join(ct.app_path(ct.APP_DIR_PY), 'cuda_stubs_builder', 'stubs')
+        if os.path.exists(stubs_dir):
+            prj_sys_path.append(stubs_dir)
 
         self.app.project = jedi.Project(
             path=fpath,
@@ -256,23 +267,29 @@ class Command:
             x += 1
         len2 = x - cursor.x
 
-        if len1 <= 0 and not after_dot:
-            return True
-
+        # if len1 <= 0 and not after_dot:
+        #     # print('len1 <= 0 and not after_dot')
+        #     return True
         completions = self.app.script.complete(
             cursor.row,
             cursor.x)
         if not completions:
             return True
 
-        text = ''
+        text = []
         for c in completions:
             pars = ''
             if c.type == 'function':
-                pars = '(' + ', '.join([p.name for p in c.params]) + ')'
-            text += c.type + '|' + c.name + '|' + pars + '\n'
+                p = c._get_docstring_signature()
+                if p:
+                    start_p = p.find("(")
+                    pars = p[start_p:]
+                else:
+                    pars = '()'
+            text.append('|'.join([c.type, c.name, pars]))
 
-        ct.ed.complete(text, len1, len2)
+        complete = '\n'.join(text)
+        ct.ed.complete(complete, len1, len2)
         return True
 
     def refactoring_rename(self):
@@ -305,7 +322,9 @@ class Command:
 
         changed_files = item.get_changed_files()
         if len(changed_files) > 1:
-            item.apply()
+            # item.apply()  # danger!!! It can break files.
+            k, v = changed_files.popitem()
+            diff_patch_code(v)
         else:
             k, v = changed_files.popitem()
             diff_patch_code(v)
@@ -357,7 +376,7 @@ class Command:
                 until_line=cursor.row1,
                 until_column=cursor.x1,
                 new_name=new_name)
-        except:
+        except Exception:
             msg("Cannot refactor, Jedi gave an error. :(")
             return
 
@@ -390,7 +409,7 @@ class Command:
                 until_line=cursor.row1,
                 until_column=cursor.x1,
                 new_name=new_name)
-        except:
+        except Exception:
             msg("Cannot refactor, Jedi gave an error. :(")
             return
 
@@ -518,7 +537,7 @@ class Command:
                     for i in range(_line+1):
                         _s = f.readline()
             _s = _s.lstrip(' \t').rstrip('\n\r')
-            items_show.append( '{}:{}:{} ({})\t  {}'.format(_fn1, _line+1, _col+1, _dir, _s) )
+            items_show.append('{}:{}:{} ({})\t  {}'.format(_fn1, _line+1, _col+1, _dir, _s))
 
         res = ct.dlg_menu(ct.MENU_LIST_ALT, items_show, caption='Usages', w=opt_menu_w, h=opt_menu_h)
         if res is None:
@@ -531,7 +550,6 @@ class Command:
         select_env()
 
     def config(self):
-
         ct.ini_write(cfg_file, cfg_section, cfg_opt_menu_w, str(opt_menu_w))
         ct.ini_write(cfg_file, cfg_section, cfg_opt_menu_h, str(opt_menu_h))
         ct.file_open(cfg_file)

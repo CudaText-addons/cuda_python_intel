@@ -1,4 +1,7 @@
 
+2021.01.08
++ updated Jedi to 0.18
+
 2020.09.13
 * changed location of config file, now it's settings/plugins.ini, section [python_intel]
 + add command "Options / Settings-plugins / Pyton Intellisense / Config"
