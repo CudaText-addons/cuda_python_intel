@@ -43,7 +43,7 @@ method=refactoring_extract_function
 
 [item20]
 section=commands
-caption=Python IntelliSense\Select Python interpreter
+caption=Python IntelliSense\Select Python interpreter...
 method=select_py_interpreter
 
 [item30]
