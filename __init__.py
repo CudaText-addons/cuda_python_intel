@@ -63,7 +63,7 @@ def select_env():
     items = list(jedi.find_system_environments())
     names = [repr(i).replace('Environment:', 'Python') for i in items]
     names.append('Other...')
-    i = ct.dlg_menu(ct.MENU_LIST, names, caption='Select Python interpreter')
+    i = ct.dlg_menu(ct.DMENU_LIST, names, caption='Select Python interpreter')
     if i is None:
         return
     elif i == len(names) - 1:
@@ -545,7 +545,7 @@ class Command:
             _s = _s.lstrip(' \t').rstrip('\n\r')
             items_show.append('{}:{}:{} ({})\t  {}'.format(_fn1, _line+1, _col+1, _dir, _s))
 
-        res = ct.dlg_menu(ct.MENU_LIST_ALT, items_show, caption='Usages', w=opt_menu_w, h=opt_menu_h)
+        res = ct.dlg_menu(ct.DMENU_LIST_ALT, items_show, caption='Usages', w=opt_menu_w, h=opt_menu_h)
         if res is None:
             return
 
