@@ -5,10 +5,10 @@ import re
 from functools import partial
 from inspect import Parameter
 from pathlib import Path
+from typing import Optional
 
 from jedi import debug
 from jedi.inference.utils import to_list
-from jedi._compatibility import cast_path
 from jedi.cache import memoize_method
 from jedi.inference.filters import AbstractFilter
 from jedi.inference.names import AbstractNameDefinition, ValueNameMixin, \
@@ -167,7 +167,7 @@ class CompiledValue(Value):
             except AttributeError:
                 return super().py__simple_getitem__(index)
         if access is None:
-            return NO_VALUES
+            return super().py__simple_getitem__(index)
 
         return ValueSet([create_from_access_path(self.inference_state, access)])
 
@@ -293,10 +293,7 @@ class CompiledModule(CompiledValue):
         return CompiledModuleContext(self)
 
     def py__path__(self):
-        paths = self.access_handle.py__path__()
-        if paths is None:
-            return None
-        return map(cast_path, paths)
+        return self.access_handle.py__path__()
 
     def is_package(self):
         return self.py__path__() is not None
@@ -309,11 +306,8 @@ class CompiledModule(CompiledValue):
             return ()
         return tuple(name.split('.'))
 
-    def py__file__(self):
-        path = cast_path(self.access_handle.py__file__())
-        if path is None:
-            return None
-        return Path(path)
+    def py__file__(self) -> Optional[Path]:
+        return self.access_handle.py__file__()  # type: ignore[no-any-return]
 
 
 class CompiledName(AbstractNameDefinition):

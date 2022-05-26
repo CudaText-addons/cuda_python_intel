@@ -13,7 +13,6 @@ from pathlib import Path
 import parso
 from parso.python import tree
 
-from jedi._compatibility import cast_path
 from jedi.parser_utils import get_executable_nodes
 from jedi import debug
 from jedi import settings
@@ -106,6 +105,9 @@ class Script:
         self.path = path.absolute() if path else None
 
         if code is None:
+            if path is None:
+                raise ValueError("Must provide at least one of code or path")
+
             # TODO add a better warning than the traceback!
             with open(path, 'rb') as f:
                 code = f.read()
@@ -151,7 +153,7 @@ class Script:
         if self.path is None:
             file_io = None
         else:
-            file_io = KnownContentFileIO(cast_path(self.path), self._code)
+            file_io = KnownContentFileIO(self.path, self._code)
         if self.path is not None and self.path.suffix == '.pyi':
             # We are in a stub file. Try to load the stub properly.
             stub_module = load_proper_stub_module(
@@ -708,7 +710,7 @@ class Interpreter(Script):
     """
     _allow_descriptor_getattr_default = True
 
-    def __init__(self, code, namespaces, **kwds):
+    def __init__(self, code, namespaces, *, project=None, **kwds):
         try:
             namespaces = [dict(n) for n in namespaces]
         except Exception:
@@ -721,16 +723,23 @@ class Interpreter(Script):
             if not isinstance(environment, InterpreterEnvironment):
                 raise TypeError("The environment needs to be an InterpreterEnvironment subclass.")
 
-        super().__init__(code, environment=environment,
-                         project=Project(Path.cwd()), **kwds)
+        if project is None:
+            project = Project(Path.cwd())
+
+        super().__init__(code, environment=environment, project=project, **kwds)
+
         self.namespaces = namespaces
         self._inference_state.allow_descriptor_getattr = self._allow_descriptor_getattr_default
 
     @cache.memoize_method
     def _get_module_context(self):
+        if self.path is None:
+            file_io = None
+        else:
+            file_io = KnownContentFileIO(self.path, self._code)
         tree_module_value = ModuleValue(
             self._inference_state, self._module_node,
-            file_io=KnownContentFileIO(str(self.path), self._code),
+            file_io=file_io,
             string_names=('__main__',),
             code_lines=self._code_lines,
         )
