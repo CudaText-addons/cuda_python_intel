@@ -1,6 +1,7 @@
 
 2022.05.27
-+ use case-sensitive list in auto-completion
++ add: i18n support from Markus
++ add: use case-sensitive list in auto-completion
 + updated Jedi to 0.18.1
 
 2021.01.08

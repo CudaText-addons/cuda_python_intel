@@ -7,6 +7,9 @@ sys.path.append(os.path.dirname(__file__))
 import jedi
 import cuda_project_man as prj_man
 
+from cudax_lib import get_translation
+_ = get_translation(__file__)  # I18N
+
 
 cfg_file = os.path.join(ct.app_path(ct.APP_DIR_SETTINGS), 'plugins.ini')
 cfg_section = 'python_intel'
@@ -56,19 +59,19 @@ def create_env(env_path):
         msg(repr(env).replace('Environment:', 'Python'))
         return env
     except jedi.InvalidPythonEnvironment:
-        msg('Incorrect environment! Python interpreter is not activated')
+        msg(_('Incorrect environment! Python interpreter is not activated'))
         return
 
 
 def select_env():
     items = list(jedi.find_system_environments())
     names = [repr(i).replace('Environment:', 'Python') for i in items]
-    names.append('Other...')
-    i = ct.dlg_menu(ct.DMENU_LIST, names, caption='Select Python interpreter')
+    names.append(_('Other...'))
+    i = ct.dlg_menu(ct.DMENU_LIST, names, caption=_('Select Python interpreter'))
     if i is None:
         return
     elif i == len(names) - 1:
-        filters = 'Executables|*.exe' if IS_NT else ''
+        filters = (_('Executables')+'|*.exe') if IS_NT else ''
         fn = ct.dlg_file(True, '!', '', filters)
         if not fn:
             return
@@ -92,7 +95,7 @@ def goto_file(filename, num_line, num_col):
     ct.ed.action(ct.EDACTION_SHOW_POS, (num_col, num_line), (0, LINE_GOTO_OFFSET))
     ct.ed.set_caret(num_col, num_line, options=ct.CARET_OPTION_UNFOLD)
 
-    ct.msg_status('Go to file: '+filename)
+    ct.msg_status(_('Go to file: ')+filename)
 
 
 def diff_patch_code(changed_file):
@@ -189,7 +192,7 @@ class Command:
             self.app.environment = select_env()
 
         if IS_NT and not self.app.environment:
-            msg("ERROR: Interpreter is not selected. Cannot use Python IntelliSense.")
+            msg(_("ERROR: Interpreter is not selected. Cannot use Python IntelliSense."))
         self.load_prj()
 
     def on_open(self, ed_self):
@@ -318,7 +321,7 @@ class Command:
             return
         name = refs[0].name
 
-        new_name = input_name('Rename to:', name)
+        new_name = input_name(_('Rename to:'), name)
         if not new_name:
             return
 
@@ -372,7 +375,7 @@ class Command:
         if not cursor:
             return
 
-        new_name = input_name('Extract variable:', '')
+        new_name = input_name(_('Extract variable:'), '')
         if not new_name:
             return
 
@@ -384,7 +387,7 @@ class Command:
                 until_column=cursor.x1,
                 new_name=new_name)
         except Exception:
-            msg("Cannot refactor, Jedi gave an error. :(")
+            msg(_("Cannot refactor, Jedi gave an error. :("))
             return
 
         changed_files = item.get_changed_files()
@@ -405,7 +408,7 @@ class Command:
         if not cursor:
             return
 
-        new_name = input_name('Extract function:', '')
+        new_name = input_name(_('Extract function:'), '')
         if not new_name:
             return
 
@@ -417,7 +420,7 @@ class Command:
                 until_column=cursor.x1,
                 new_name=new_name)
         except Exception:
-            msg("Cannot refactor, Jedi gave an error. :(")
+            msg(_("Cannot refactor, Jedi gave an error. :("))
             return
 
         changed_files = item.get_changed_files()
@@ -504,7 +507,7 @@ class Command:
             ct.ed.cmd(cmds.cmd_ShowPanelOutput)
             ct.ed.focus()
         else:
-            ct.msg_status('Cannot find doc-string')
+            ct.msg_status(_('Cannot find doc-string'))
 
     def show_usages(self):
         if not self.app.environment:
@@ -528,7 +531,7 @@ class Command:
             return
 
         if not usages:
-            ct.msg_status('Cannot find usages')
+            ct.msg_status(_('Cannot find usages'))
             return
 
         items_show = []
@@ -546,7 +549,7 @@ class Command:
             _s = _s.lstrip(' \t').rstrip('\n\r')
             items_show.append('{}:{}:{} ({})\t  {}'.format(_fn1, _line+1, _col+1, _dir, _s))
 
-        res = ct.dlg_menu(ct.DMENU_LIST_ALT, items_show, caption='Usages', w=opt_menu_w, h=opt_menu_h)
+        res = ct.dlg_menu(ct.DMENU_LIST_ALT, items_show, caption=_('Usages'), w=opt_menu_w, h=opt_menu_h)
         if res is None:
             return
 
