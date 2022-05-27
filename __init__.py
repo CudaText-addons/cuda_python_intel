@@ -21,6 +21,7 @@ LINE_GOTO_OFFSET = 5
 opt_menu_w = int(ct.ini_read(cfg_file, cfg_section, cfg_opt_menu_w, '600'))
 opt_menu_h = int(ct.ini_read(cfg_file, cfg_section, cfg_opt_menu_h, '400'))
 
+jedi.settings.case_insensitive_completion = False
 
 def pretty_path(s):
     if not IS_NT:
