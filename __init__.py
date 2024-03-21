@@ -93,7 +93,7 @@ def goto_file(filename, num_line, num_col):
     # needed because edaction_show_pos don't scroll w/o it
     ct.app_idle(False)
     ct.ed.action(ct.EDACTION_SHOW_POS, (num_col, num_line), (0, LINE_GOTO_OFFSET))
-    ct.ed.set_caret(num_col, num_line, options=ct.CARET_OPTION_UNFOLD)
+    ct.ed.set_caret(num_col, num_line)
 
     ct.msg_status(_('Go to file: ')+filename)
 
