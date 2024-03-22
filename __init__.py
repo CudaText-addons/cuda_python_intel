@@ -563,3 +563,10 @@ class Command:
         ct.ini_write(cfg_file, cfg_section, cfg_opt_menu_w, str(opt_menu_w))
         ct.ini_write(cfg_file, cfg_section, cfg_opt_menu_h, str(opt_menu_h))
         ct.file_open(cfg_file)
+
+        lines = [ct.ed.get_text_line(i) for i in range(ct.ed.get_line_count())]
+        try:
+            index = lines.index('['+cfg_section+']')
+            ct.ed.set_caret(0, index)
+        except:
+            pass
